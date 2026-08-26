@@ -11,12 +11,81 @@
 //
 // Every failure path returns the same generic error — this endpoint
 // must not let an attacker enumerate roster membership (spec 21).
+//
+// Deliberately self-contained (no ../_shared imports): this file is
+// meant to be pasted as-is into the Supabase Dashboard's Edge Function
+// editor, which may not support multi-file functions.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 import { z } from "https://esm.sh/zod@3.23.8";
-import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
-import { hashIdentifier, normalizeIdentifier } from "../_shared/identifier.ts";
-import { checkRateLimit } from "../_shared/rateLimit.ts";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+
+function jsonResponse(body: unknown, status = 200): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
+function normalizeIdentifier(raw: string): string {
+  const stripped = raw.trim().replace(/[\s.\-]/g, "");
+  if (/^\d+$/.test(stripped)) {
+    return stripped.padStart(9, "0");
+  }
+  return stripped.toUpperCase();
+}
+
+/** HMAC-SHA256(normalized identifier, server secret), hex-encoded (spec section 13.2). */
+async function hashIdentifier(normalized: string, secret: string): Promise<string> {
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+  const signature = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(normalized));
+  return Array.from(new Uint8Array(signature))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+/**
+ * Fixed-window rate limit backed by rate_limit_hits (spec section 21:
+ * "Rate limit ל־join attempts ו־response spam"). Not a queue or a
+ * distributed limiter — good enough for a single-classroom-sized burst,
+ * intentionally simple for Phase 1.
+ */
+async function checkRateLimit(
+  admin: ReturnType<typeof createClient>,
+  bucket: string,
+  opts: { maxHits: number; windowSeconds: number }
+): Promise<{ allowed: boolean }> {
+  const since = new Date(Date.now() - opts.windowSeconds * 1000).toISOString();
+  const { count, error } = await admin
+    .from("rate_limit_hits")
+    .select("id", { count: "exact", head: true })
+    .eq("bucket", bucket)
+    .gte("created_at", since);
+
+  if (error) {
+    // Fail open on infra errors rather than locking every student out of class.
+    console.error("rate limit check failed", error);
+    return { allowed: true };
+  }
+
+  if ((count ?? 0) >= opts.maxHits) {
+    return { allowed: false };
+  }
+
+  await admin.from("rate_limit_hits").insert({ bucket });
+  return { allowed: true };
+}
 
 const joinRequestSchema = z
   .object({
