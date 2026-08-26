@@ -1,0 +1,14 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# Single-page app: any path not matching a static asset falls through
+# to index.html so react-router's client-side routes (/join, /studio, ...)
+# work on hard refresh / direct link.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
