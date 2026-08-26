@@ -1,4 +1,4 @@
-# Live Classroom Data Lab
+# ShowOff
 
 MVP+ implementation of the spec in [`live_data_classroom_spec_he_v3.docx`](./live_data_classroom_spec_he_v3.docx)
 (Hebrew product/technical spec). This repo currently implements **Phase 1 —

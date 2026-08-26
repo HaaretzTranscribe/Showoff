@@ -13,7 +13,7 @@ export function App() {
   if (!isSupabaseConfigured) {
     return (
       <main>
-        <h1>Live Classroom Data Lab</h1>
+        <h1>ShowOff</h1>
         <p>
           This deploy has no Supabase project connected yet. Set{" "}
           <code>VITE_SUPABASE_URL</code> and <code>VITE_SUPABASE_ANON_KEY</code> in your

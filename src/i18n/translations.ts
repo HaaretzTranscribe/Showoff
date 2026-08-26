@@ -8,7 +8,7 @@
 
 const en = {
   common: {
-    appName: "Live Classroom Data Lab",
+    appName: "ShowOff",
     languageName: "English",
     switchLanguage: "עברית",
     loading: "Loading…",
@@ -79,7 +79,7 @@ const en = {
 
 const he: Translation<typeof en> = {
   common: {
-    appName: "מעבדת נתונים חיה לכיתה",
+    appName: "ShowOff",
     languageName: "עברית",
     switchLanguage: "English",
     loading: "טוען…",
