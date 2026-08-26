@@ -57,7 +57,7 @@ export function JoinPage() {
             value={identifier}
             onChange={(e) => setIdentifier(e.target.value)}
             inputMode="text"
-            autoComplete="off"
+            autoComplete="name"
             required
           />
         </label>

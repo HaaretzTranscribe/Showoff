@@ -45,7 +45,7 @@ export function LessonsPage() {
             plannedAt: null,
             internalNotes: null,
             config: {
-              identityFieldLabel: { he: "ת.ז. / מספר סטודנט", en: "Student ID" },
+              identityFieldLabel: { he: "שם מלא", en: "Full name" },
               rosterPolicy,
               attendanceCodePolicy: "static",
               rotatingCodeTtlSeconds: 600,

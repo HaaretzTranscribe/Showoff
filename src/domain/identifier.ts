@@ -4,13 +4,18 @@
  * it can run identically in the browser (inline format hints) and in
  * the join-session Edge Function (source of truth before HMAC hashing).
  *
- * NOTE: this file is intentionally mirrored at
- * supabase/functions/_shared/identifier.ts because Deno Edge Functions
- * resolve imports differently from the Vite bundle and cannot reach
- * into src/. Keep both copies in sync if the normalization rules change.
+ * The identifier is now a full name rather than an ID number (raw
+ * names are recorded separately for attendance — see
+ * attendance_records / 0006_attendance_records.sql); this only feeds
+ * the de-duplication hash, so normalization just needs to make trivial
+ * retyping differences (spacing, case) hash the same way.
+ *
+ * NOTE: this file is intentionally mirrored inline inside
+ * supabase/functions/join-session/index.ts, since that function is
+ * deployed by pasting into the Supabase Dashboard's editor rather than
+ * the CLI. Keep both copies in sync if the normalization rules change.
  */
 
-/** Strips whitespace/separators; pads pure-numeric IDs (ת.ז., student number) to 9 digits. */
 export function normalizeIdentifier(raw: string): string {
   const stripped = raw.trim().replace(/[\s.\-]/g, "");
   if (/^\d+$/.test(stripped)) {
@@ -21,5 +26,5 @@ export function normalizeIdentifier(raw: string): string {
 
 export function isPlausibleIdentifier(raw: string): boolean {
   const normalized = normalizeIdentifier(raw);
-  return normalized.length >= 3 && normalized.length <= 20;
+  return normalized.length >= 3 && normalized.length <= 64;
 }

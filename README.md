@@ -116,6 +116,12 @@ Policies (`0002_rls_policies.sql`) enforce, per spec section 21:
   `course_members` of that course.
 - `audit_events` has no client insert policy at all — only the service
   role writes audit rows, so the trail can't be forged from the browser.
+- Students join with their **full name**, not an ID number. It's hashed
+  for de-duplication and never attached to `responses`. The raw name is
+  recorded separately in `attendance_records` (instructor-read-only,
+  written only by `join-session`) purely so attendance can be taken —
+  matching spec section 18's "attendance export is separate from the
+  response export."
 
 ## Creating a demo instructor
 

@@ -264,6 +264,19 @@ Deno.serve(async (req: Request) => {
     return genericFailure();
   }
 
+  // Raw name for attendance only — never joined to responses, only the
+  // instructor can read attendance_records (spec section 18).
+  await admin
+    .from("attendance_records")
+    .upsert(
+      {
+        class_session_id: classSession.id,
+        participant_id: participant.id,
+        display_name: payload.studentIdentifier.trim(),
+      },
+      { onConflict: "participant_id" }
+    );
+
   await logAudit(admin, "student", classSession.id, "join_accepted", {
     participantId: participant.id,
   });

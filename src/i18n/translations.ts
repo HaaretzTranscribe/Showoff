@@ -19,7 +19,7 @@ const en = {
   },
   join: {
     title: "Join the class",
-    identifierLabel: "Student ID",
+    identifierLabel: "Full name",
     codeLabel: "Class code",
     submit: "Join",
     submitting: "Joining…",
@@ -90,7 +90,7 @@ const he: Translation<typeof en> = {
   },
   join: {
     title: "הצטרפות לשיעור",
-    identifierLabel: "מספר סטודנט",
+    identifierLabel: "שם מלא",
     codeLabel: "קוד כיתה",
     submit: "הצטרפות",
     submitting: "מצטרף…",
