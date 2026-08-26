@@ -153,7 +153,7 @@ type Translation<T> = { [K in keyof T]: T[K] extends string ? string : Translati
 
 export type Locale = "he" | "en";
 
-export const dictionaries: Record<Locale, typeof en> = { en, he };
+export const dictionaries: Record<Locale, Translation<typeof en>> = { en, he };
 
 export const localeDirection: Record<Locale, "rtl" | "ltr"> = {
   he: "rtl",
