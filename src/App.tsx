@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { isSupabaseConfigured } from "@/lib/supabaseClient";
+import { LanguagePickerPage } from "@/features/language/LanguagePickerPage";
 import { JoinPage } from "@/features/join/JoinPage";
 import { QuestionnairePage } from "@/features/join/QuestionnairePage";
 import { PresentationPage } from "@/features/presentation/PresentationPage";
@@ -25,7 +26,7 @@ export function App() {
 
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/join" replace />} />
+      <Route path="/" element={<LanguagePickerPage />} />
 
       {/* Student App */}
       <Route path="/join" element={<JoinPage />} />
