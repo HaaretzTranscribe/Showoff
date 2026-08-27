@@ -14,7 +14,10 @@ export function InstructorAuthGate({ children }: { children: ReactNode }) {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
-    const { error: signInError } = await supabase.auth.signInWithOtp({ email });
+    const { error: signInError } = await supabase.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: window.location.origin },
+    });
     if (signInError) {
       setError(signInError.message);
       return;
