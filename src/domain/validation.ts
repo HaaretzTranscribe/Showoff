@@ -133,11 +133,6 @@ export const joinRequestSchema = z.object({
   clientFingerprint: z.string().max(256).optional(),
 });
 
-export const joinRequestSchemaWithTarget = joinRequestSchema.refine(
-  (v) => Boolean(v.sessionId || v.lessonJoinSlug),
-  { message: "either sessionId or lessonJoinSlug is required" }
-);
-
 // --- Response submit (spec section 15) ---
 
 export const responseValueSchema = z.union([

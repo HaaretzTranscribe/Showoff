@@ -124,7 +124,11 @@ function LessonRow({ lesson }: { lesson: Lesson }) {
     onSuccess: (rows) => downloadAttendanceCsv(rows, `attendance-${opened!.classSessionId}.csv`),
   });
 
-  const joinUrl = opened ? `${window.location.origin}/join?s=${opened.classSessionId}` : null;
+  // No session id needed in the link: the code alone resolves the
+  // session, and students always have to type it anyway (that's what
+  // proves they're in the room) — so this is one reusable URL/QR
+  // rather than a fresh one per lesson.
+  const joinUrl = `${window.location.origin}/join`;
 
   return (
     <li>

@@ -87,21 +87,17 @@ async function checkRateLimit(
   return { allowed: true };
 }
 
-const joinRequestSchema = z
-  .object({
-    sessionId: z.string().uuid().optional(),
-    lessonJoinSlug: z.string().min(1).max(64).optional(),
-    studentIdentifier: z.string().min(1).max(64),
-    attendanceCode: z
-      .string()
-      .trim()
-      .toUpperCase()
-      .regex(/^[A-Z0-9]{4,8}$/),
-    clientFingerprint: z.string().max(256).optional(),
-  })
-  .refine((v) => Boolean(v.sessionId || v.lessonJoinSlug), {
-    message: "either sessionId or lessonJoinSlug is required",
-  });
+const joinRequestSchema = z.object({
+  sessionId: z.string().uuid().optional(),
+  lessonJoinSlug: z.string().min(1).max(64).optional(),
+  studentIdentifier: z.string().min(1).max(64),
+  attendanceCode: z
+    .string()
+    .trim()
+    .toUpperCase()
+    .regex(/^[A-Z0-9]{4,8}$/),
+  clientFingerprint: z.string().max(256).optional(),
+});
 
 const JOIN_ALLOWED_STATES = new Set(["join_open", "responses_open"]);
 
@@ -195,6 +191,22 @@ Deno.serve(async (req: Request) => {
         .maybeSingle();
       classSession = data;
     }
+  } else {
+    // No session/lesson identifier at all — spec section 4's actual
+    // flow: student just opens /join and types the code that's
+    // projected in class. Resolve directly by matching the code among
+    // currently-open sessions (codes only need to be unique among
+    // sessions open at the same time, which the 6-char alphabet with
+    // no confusing characters makes practically collision-free).
+    const { data } = await admin
+      .from("class_sessions")
+      .select("id, lesson_id, status, current_code, code_policy, code_rotated_at")
+      .eq("current_code", payload.attendanceCode)
+      .in("status", ["join_open", "responses_open"])
+      .order("opened_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    classSession = data;
   }
 
   if (!classSession || !JOIN_ALLOWED_STATES.has(classSession.status)) {
