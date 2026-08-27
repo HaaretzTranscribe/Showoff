@@ -71,6 +71,11 @@ const en = {
       promptHe: "Prompt (Hebrew)",
       promptEn: "Prompt (English)",
       empty: "No questions yet.",
+      answerOptions: "Answer options",
+      optionLabelHe: "Option (Hebrew)",
+      optionLabelEn: "Option (English)",
+      addOption: "Add option",
+      noOptionsYet: "No answer options yet — students won't be able to answer this question.",
     },
   },
   presentation: {
@@ -145,6 +150,11 @@ const he: Translation<typeof en> = {
       promptHe: "ניסוח (עברית)",
       promptEn: "ניסוח (אנגלית)",
       empty: "אין עדיין שאלות.",
+      answerOptions: "אפשרויות תשובה",
+      optionLabelHe: "אפשרות (עברית)",
+      optionLabelEn: "אפשרות (אנגלית)",
+      addOption: "הוספת אפשרות",
+      noOptionsYet: "אין עדיין אפשרויות תשובה — סטודנטים לא יוכלו לענות על השאלה הזו.",
     },
   },
   presentation: {

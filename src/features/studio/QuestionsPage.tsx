@@ -4,7 +4,17 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useI18n } from "@/i18n/I18nProvider";
 import { errorMessage } from "@/lib/errorMessage";
 import type { Question, QuestionType } from "@/domain/types";
-import { createQuestion, deleteQuestion, listQuestions, updateQuestion } from "./api";
+import {
+  createQuestion,
+  createQuestionOption,
+  deleteQuestion,
+  deleteQuestionOption,
+  listQuestionOptions,
+  listQuestions,
+  updateQuestion,
+} from "./api";
+
+const CHOICE_TYPES: QuestionType[] = ["single_choice", "multiple_choice"];
 
 /** Generates a stable_key the instructor never has to think about — it
  * only needs to be unique and never change, not mean anything to them. */
@@ -254,6 +264,70 @@ function QuestionRow({ question, lessonId }: { question: Question; lessonId: str
         {t("common.delete")}
       </button>
       {deleteMutation.isError && <span role="alert">{errorMessage(deleteMutation.error)}</span>}
+      {CHOICE_TYPES.includes(question.type) && <QuestionOptionsManager questionId={question.id} />}
     </li>
+  );
+}
+
+function QuestionOptionsManager({ questionId }: { questionId: string }) {
+  const { t, locale } = useI18n();
+  const queryClient = useQueryClient();
+  const [labelHe, setLabelHe] = useState("");
+  const [labelEn, setLabelEn] = useState("");
+
+  const optionsQuery = useQuery({
+    queryKey: ["question-options", questionId],
+    queryFn: () => listQuestionOptions(questionId),
+  });
+
+  const addMutation = useMutation({
+    mutationFn: () =>
+      createQuestionOption(questionId, { he: labelHe, en: labelEn }, optionsQuery.data?.length ?? 0),
+    onSuccess: () => {
+      setLabelHe("");
+      setLabelEn("");
+      queryClient.invalidateQueries({ queryKey: ["question-options", questionId] });
+    },
+  });
+
+  const removeMutation = useMutation({
+    mutationFn: (optionId: string) => deleteQuestionOption(optionId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["question-options", questionId] }),
+  });
+
+  return (
+    <div>
+      <strong>{t("studio.questions.answerOptions")}</strong>
+      {optionsQuery.data && optionsQuery.data.length === 0 && <p>{t("studio.questions.noOptionsYet")}</p>}
+      <ul>
+        {optionsQuery.data?.map((opt) => (
+          <li key={opt.id}>
+            {opt.label[locale] || opt.label.he || opt.label.en}{" "}
+            <button type="button" onClick={() => removeMutation.mutate(opt.id)} disabled={removeMutation.isPending}>
+              {t("common.delete")}
+            </button>
+          </li>
+        ))}
+      </ul>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (labelHe.trim() || labelEn.trim()) addMutation.mutate();
+        }}
+      >
+        <label>
+          {t("studio.questions.optionLabelHe")}
+          <input value={labelHe} onChange={(e) => setLabelHe(e.target.value)} dir="rtl" />
+        </label>
+        <label>
+          {t("studio.questions.optionLabelEn")}
+          <input value={labelEn} onChange={(e) => setLabelEn(e.target.value)} dir="ltr" />
+        </label>
+        <button type="submit" disabled={addMutation.isPending || (!labelHe.trim() && !labelEn.trim())}>
+          {t("studio.questions.addOption")}
+        </button>
+        {addMutation.isError && <span role="alert">{errorMessage(addMutation.error)}</span>}
+      </form>
+    </div>
   );
 }

@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabaseClient";
-import type { Course, Lesson, LessonConfig, Question, QuestionConfig, QuestionType } from "@/domain/types";
+import type { Course, Lesson, LessonConfig, Question, QuestionConfig, QuestionOption, QuestionType } from "@/domain/types";
 import { createLessonSchema, createQuestionSchema, type CreateLessonInput, type CreateQuestionInput } from "@/domain/validation";
 
 /**
@@ -190,5 +190,64 @@ export async function updateQuestion(
 
 export async function deleteQuestion(id: string): Promise<void> {
   const { error } = await supabase.from("questions").delete().eq("id", id);
+  if (error) throw error;
+}
+
+// --- Question options (answer choices for single/multiple_choice) ---
+
+interface QuestionOptionRow {
+  id: string;
+  question_id: string;
+  value: string;
+  label_he: string;
+  label_en: string;
+  order_index: number;
+}
+
+function mapQuestionOption(row: QuestionOptionRow): QuestionOption {
+  return {
+    id: row.id,
+    questionId: row.question_id,
+    value: row.value,
+    label: { he: row.label_he, en: row.label_en },
+    orderIndex: row.order_index,
+  };
+}
+
+export async function listQuestionOptions(questionId: string): Promise<QuestionOption[]> {
+  const { data, error } = await supabase
+    .from("question_options")
+    .select("*")
+    .eq("question_id", questionId)
+    .order("order_index", { ascending: true });
+  if (error) throw error;
+  return (data as QuestionOptionRow[]).map(mapQuestionOption);
+}
+
+/** `value` (the stored answer, e.g. in a response's value_json) is
+ * generated the same way stable_key is — it just needs to be a stable
+ * handle, not something the instructor has to invent. */
+export async function createQuestionOption(
+  questionId: string,
+  label: { he: string; en: string },
+  orderIndex: number
+): Promise<void> {
+  const value = crypto.randomUUID().replace(/-/g, "").slice(0, 8);
+  const { error } = await supabase
+    .from("question_options")
+    .insert({ question_id: questionId, value, label_he: label.he, label_en: label.en, order_index: orderIndex });
+  if (error) throw error;
+}
+
+export async function updateQuestionOptionLabel(id: string, label: { he: string; en: string }): Promise<void> {
+  const { error } = await supabase
+    .from("question_options")
+    .update({ label_he: label.he, label_en: label.en })
+    .eq("id", id);
+  if (error) throw error;
+}
+
+export async function deleteQuestionOption(id: string): Promise<void> {
+  const { error } = await supabase.from("question_options").delete().eq("id", id);
   if (error) throw error;
 }
