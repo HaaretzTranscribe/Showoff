@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useI18n } from "@/i18n/I18nProvider";
 import { errorMessage } from "@/lib/errorMessage";
+import { stableKeySchema } from "@/domain/validation";
 import type { QuestionType } from "@/domain/types";
 import { createQuestion, listQuestions } from "./api";
 
@@ -29,6 +30,7 @@ export function QuestionsPage() {
   const [scaleMin, setScaleMin] = useState(1);
   const [scaleMax, setScaleMax] = useState(5);
   const [scaleStep, setScaleStep] = useState(1);
+  const [stableKeyError, setStableKeyError] = useState<string | null>(null);
 
   const questionsQuery = useQuery({
     queryKey: ["questions", lessonId],
@@ -62,9 +64,16 @@ export function QuestionsPage() {
       <form
         onSubmit={(e) => {
           e.preventDefault();
+          const trimmedKey = stableKey.trim();
+          const keyCheck = stableKeySchema.safeParse(trimmedKey);
+          if (!keyCheck.success) {
+            setStableKeyError(keyCheck.error.issues[0]?.message ?? "invalid stable key");
+            return;
+          }
+          setStableKeyError(null);
           createMutation.mutate({
             lessonId,
-            stableKey,
+            stableKey: trimmedKey,
             type,
             prompt: { he: promptHe, en: promptEn },
             orderIndex: questionsQuery.data?.length ?? 0,
@@ -76,12 +85,14 @@ export function QuestionsPage() {
           {t("studio.questions.stableKey")}
           <input
             value={stableKey}
-            onChange={(e) => setStableKey(e.target.value)}
+            onChange={(e) => {
+              setStableKey(e.target.value);
+              setStableKeyError(null);
+            }}
             placeholder="q_sleep_hours"
-            pattern="^[a-z][a-z0-9_]{1,63}$"
-            required
           />
         </label>
+        {stableKeyError && <p role="alert">{stableKeyError}</p>}
         <label>
           {t("studio.questions.type")}
           <select value={type} onChange={(e) => setType(e.target.value as QuestionType)}>
