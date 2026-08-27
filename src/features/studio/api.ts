@@ -110,6 +110,13 @@ export async function createLesson(input: CreateLessonInput): Promise<Lesson> {
   return mapLesson(data as LessonRow);
 }
 
+/** Lets an instructor add the missing-language title later — bilingual
+ * fields only require one language at creation time, not both. */
+export async function updateLessonTitle(id: string, title: { he: string; en: string }): Promise<void> {
+  const { error } = await supabase.from("lessons").update({ title_he: title.he, title_en: title.en }).eq("id", id);
+  if (error) throw error;
+}
+
 // --- Questions ---
 
 interface QuestionRow {

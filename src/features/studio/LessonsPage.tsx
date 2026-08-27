@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useI18n } from "@/i18n/I18nProvider";
 import { errorMessage } from "@/lib/errorMessage";
 import type { Lesson, RosterPolicy } from "@/domain/types";
-import { createLesson, listLessons } from "./api";
+import { createLesson, listLessons, updateLessonTitle } from "./api";
 import { listAttendance, openResponses, openSession, type AttendanceRow } from "./sessions";
 
 export function LessonsPage() {
@@ -105,9 +105,21 @@ function downloadAttendanceCsv(rows: AttendanceRow[], filename: string) {
 
 function LessonRow({ lesson }: { lesson: Lesson }) {
   const { t } = useI18n();
+  const queryClient = useQueryClient();
   const [opened, setOpened] = useState<{ classSessionId: string; code: string } | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [titleHe, setTitleHe] = useState(lesson.title.he);
+  const [titleEn, setTitleEn] = useState(lesson.title.en);
 
   const [responsesOpen, setResponsesOpen] = useState(false);
+
+  const updateMutation = useMutation({
+    mutationFn: () => updateLessonTitle(lesson.id, { he: titleHe, en: titleEn }),
+    onSuccess: () => {
+      setEditing(false);
+      queryClient.invalidateQueries({ queryKey: ["lessons", lesson.courseId] });
+    },
+  });
 
   const openMutation = useMutation({
     mutationFn: () => openSession(lesson.id),
@@ -130,9 +142,38 @@ function LessonRow({ lesson }: { lesson: Lesson }) {
   // rather than a fresh one per lesson.
   const joinUrl = `${window.location.origin}/join`;
 
+  if (editing) {
+    return (
+      <li>
+        <label>
+          {t("studio.lessons.titleLabelHe")}
+          <input value={titleHe} onChange={(e) => setTitleHe(e.target.value)} dir="rtl" />
+        </label>
+        <label>
+          {t("studio.lessons.titleLabelEn")}
+          <input value={titleEn} onChange={(e) => setTitleEn(e.target.value)} dir="ltr" />
+        </label>
+        <button
+          type="button"
+          onClick={() => updateMutation.mutate()}
+          disabled={updateMutation.isPending || (!titleHe.trim() && !titleEn.trim())}
+        >
+          {t("common.save")}
+        </button>
+        <button type="button" onClick={() => setEditing(false)}>
+          {t("common.cancel")}
+        </button>
+        {updateMutation.isError && <span role="alert">{errorMessage(updateMutation.error)}</span>}
+      </li>
+    );
+  }
+
   return (
     <li>
-      <Link to={`/studio/lessons/${lesson.id}/questions`}>{lesson.title.he || lesson.title.en}</Link>
+      <Link to={`/studio/lessons/${lesson.id}/questions`}>{lesson.title.he || lesson.title.en}</Link>{" "}
+      <button type="button" onClick={() => setEditing(true)}>
+        {t("common.edit")}
+      </button>
       {" — "}
       <button type="button" onClick={() => openMutation.mutate()} disabled={openMutation.isPending}>
         {t("studio.lessons.openSession")}
