@@ -16,7 +16,9 @@ export function InstructorAuthGate({ children }: { children: ReactNode }) {
     setError(null);
     const { error: signInError } = await supabase.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: window.location.origin },
+      // Not window.location.origin: the bare root is the student
+      // language-picker, which always forwards to /join afterward.
+      options: { emailRedirectTo: `${window.location.origin}/studio` },
     });
     if (signInError) {
       setError(signInError.message);
