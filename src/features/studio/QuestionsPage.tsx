@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useI18n } from "@/i18n/I18nProvider";
 import { errorMessage } from "@/lib/errorMessage";
 import type { Question, QuestionType } from "@/domain/types";
-import { createQuestion, deleteQuestion, listQuestions, updateQuestionPrompt } from "./api";
+import { createQuestion, deleteQuestion, listQuestions, updateQuestion } from "./api";
 
 /** Generates a stable_key the instructor never has to think about — it
  * only needs to be unique and never change, not mean anything to them. */
@@ -22,6 +22,84 @@ const QUESTION_TYPES: QuestionType[] = [
   "datetime",
   "hidden_meta",
 ];
+
+function configForType(type: QuestionType, scale: { min: number; max: number; step: number }): Record<string, unknown> {
+  if (type === "scale") {
+    return { required: true, min: scale.min, max: scale.max, step: scale.step };
+  }
+  return { required: true };
+}
+
+interface QuestionFormFieldsProps {
+  type: QuestionType;
+  setType: (type: QuestionType) => void;
+  promptHe: string;
+  setPromptHe: (value: string) => void;
+  promptEn: string;
+  setPromptEn: (value: string) => void;
+  scaleMin: number;
+  setScaleMin: (value: number) => void;
+  scaleMax: number;
+  setScaleMax: (value: number) => void;
+  scaleStep: number;
+  setScaleStep: (value: number) => void;
+}
+
+function QuestionFormFields({
+  type,
+  setType,
+  promptHe,
+  setPromptHe,
+  promptEn,
+  setPromptEn,
+  scaleMin,
+  setScaleMin,
+  scaleMax,
+  setScaleMax,
+  scaleStep,
+  setScaleStep,
+}: QuestionFormFieldsProps) {
+  const { t } = useI18n();
+  return (
+    <>
+      <label>
+        {t("studio.questions.type")}
+        <select value={type} onChange={(e) => setType(e.target.value as QuestionType)}>
+          {QUESTION_TYPES.map((qt) => (
+            <option key={qt} value={qt}>
+              {qt}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label>
+        {t("studio.questions.promptHe")}
+        <input value={promptHe} onChange={(e) => setPromptHe(e.target.value)} dir="rtl" />
+      </label>
+      <label>
+        {t("studio.questions.promptEn")}
+        <input value={promptEn} onChange={(e) => setPromptEn(e.target.value)} dir="ltr" />
+      </label>
+
+      {type === "scale" && (
+        <fieldset>
+          <label>
+            min
+            <input type="number" value={scaleMin} onChange={(e) => setScaleMin(Number(e.target.value))} />
+          </label>
+          <label>
+            max
+            <input type="number" value={scaleMax} onChange={(e) => setScaleMax(Number(e.target.value))} />
+          </label>
+          <label>
+            step
+            <input type="number" value={scaleStep} onChange={(e) => setScaleStep(Number(e.target.value))} />
+          </label>
+        </fieldset>
+      )}
+    </>
+  );
+}
 
 export function QuestionsPage() {
   const { t } = useI18n();
@@ -52,13 +130,6 @@ export function QuestionsPage() {
 
   if (!lessonId) return null;
 
-  function configForType(): Record<string, unknown> {
-    if (type === "scale") {
-      return { required: true, min: scaleMin, max: scaleMax, step: scaleStep };
-    }
-    return { required: true };
-  }
-
   return (
     <section>
       <h1>{t("studio.questions.title")}</h1>
@@ -72,50 +143,26 @@ export function QuestionsPage() {
             type,
             prompt: { he: promptHe, en: promptEn },
             orderIndex: questionsQuery.data?.length ?? 0,
-            config: configForType(),
+            config: configForType(type, { min: scaleMin, max: scaleMax, step: scaleStep }),
           });
         }}
       >
-        <label>
-          {t("studio.questions.type")}
-          <select value={type} onChange={(e) => setType(e.target.value as QuestionType)}>
-            {QUESTION_TYPES.map((qt) => (
-              <option key={qt} value={qt}>
-                {qt}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          {t("studio.questions.promptHe")}
-          <input value={promptHe} onChange={(e) => setPromptHe(e.target.value)} dir="rtl" />
-        </label>
-        <label>
-          {t("studio.questions.promptEn")}
-          <input value={promptEn} onChange={(e) => setPromptEn(e.target.value)} dir="ltr" />
-        </label>
+        <QuestionFormFields
+          type={type}
+          setType={setType}
+          promptHe={promptHe}
+          setPromptHe={setPromptHe}
+          promptEn={promptEn}
+          setPromptEn={setPromptEn}
+          scaleMin={scaleMin}
+          setScaleMin={setScaleMin}
+          scaleMax={scaleMax}
+          setScaleMax={setScaleMax}
+          scaleStep={scaleStep}
+          setScaleStep={setScaleStep}
+        />
 
-        {type === "scale" && (
-          <fieldset>
-            <label>
-              min
-              <input type="number" value={scaleMin} onChange={(e) => setScaleMin(Number(e.target.value))} />
-            </label>
-            <label>
-              max
-              <input type="number" value={scaleMax} onChange={(e) => setScaleMax(Number(e.target.value))} />
-            </label>
-            <label>
-              step
-              <input type="number" value={scaleStep} onChange={(e) => setScaleStep(Number(e.target.value))} />
-            </label>
-          </fieldset>
-        )}
-
-        <button
-          type="submit"
-          disabled={createMutation.isPending || (!promptHe.trim() && !promptEn.trim())}
-        >
+        <button type="submit" disabled={createMutation.isPending || (!promptHe.trim() && !promptEn.trim())}>
           {t("studio.questions.newQuestion")}
         </button>
         {createMutation.isError && <p role="alert">{errorMessage(createMutation.error)}</p>}
@@ -137,11 +184,21 @@ function QuestionRow({ question, lessonId }: { question: Question; lessonId: str
   const { t, locale } = useI18n();
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState(false);
+  const [type, setType] = useState<QuestionType>(question.type);
   const [promptHe, setPromptHe] = useState(question.prompt.he);
   const [promptEn, setPromptEn] = useState(question.prompt.en);
+  const existingScale = question.config as Partial<{ min: number; max: number; step: number }>;
+  const [scaleMin, setScaleMin] = useState(existingScale.min ?? 1);
+  const [scaleMax, setScaleMax] = useState(existingScale.max ?? 5);
+  const [scaleStep, setScaleStep] = useState(existingScale.step ?? 1);
 
   const updateMutation = useMutation({
-    mutationFn: () => updateQuestionPrompt(question.id, { he: promptHe, en: promptEn }),
+    mutationFn: () =>
+      updateQuestion(question.id, {
+        type,
+        prompt: { he: promptHe, en: promptEn },
+        config: configForType(type, { min: scaleMin, max: scaleMax, step: scaleStep }),
+      }),
     onSuccess: () => {
       setEditing(false);
       queryClient.invalidateQueries({ queryKey: ["questions", lessonId] });
@@ -156,14 +213,20 @@ function QuestionRow({ question, lessonId }: { question: Question; lessonId: str
   if (editing) {
     return (
       <li>
-        <label>
-          {t("studio.questions.promptHe")}
-          <input value={promptHe} onChange={(e) => setPromptHe(e.target.value)} dir="rtl" />
-        </label>
-        <label>
-          {t("studio.questions.promptEn")}
-          <input value={promptEn} onChange={(e) => setPromptEn(e.target.value)} dir="ltr" />
-        </label>
+        <QuestionFormFields
+          type={type}
+          setType={setType}
+          promptHe={promptHe}
+          setPromptHe={setPromptHe}
+          promptEn={promptEn}
+          setPromptEn={setPromptEn}
+          scaleMin={scaleMin}
+          setScaleMin={setScaleMin}
+          scaleMax={scaleMax}
+          setScaleMax={setScaleMax}
+          scaleStep={scaleStep}
+          setScaleStep={setScaleStep}
+        />
         <button type="button" onClick={() => updateMutation.mutate()} disabled={updateMutation.isPending}>
           {t("common.save")}
         </button>

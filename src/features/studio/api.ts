@@ -164,10 +164,27 @@ export async function createQuestion(input: CreateQuestionInput): Promise<Questi
   return mapQuestion(data as QuestionRow);
 }
 
-/** Only the wording is editable — stable_key/type/config stay fixed once
- * created (spec section 6.2: rewording must not break Scene bindings). */
-export async function updateQuestionPrompt(id: string, prompt: { he: string; en: string }): Promise<void> {
-  const { error } = await supabase.from("questions").update({ prompt_he: prompt.he, prompt_en: prompt.en }).eq("id", id);
+/**
+ * stable_key alone is immutable (enforced by a DB trigger) — Scene
+ * bindings in a later phase reference it, never the label. Type and
+ * config CAN change; spec section 7.2 expects the system to flag any
+ * dependent Scene as "broken" when that happens rather than forbidding
+ * the edit outright (Scene Builder itself isn't built yet, so there's
+ * nothing to flag today).
+ */
+export async function updateQuestion(
+  id: string,
+  updates: { type: QuestionType; prompt: { he: string; en: string }; config: Record<string, unknown> }
+): Promise<void> {
+  const { error } = await supabase
+    .from("questions")
+    .update({
+      type: updates.type,
+      prompt_he: updates.prompt.he,
+      prompt_en: updates.prompt.en,
+      config_json: updates.config,
+    })
+    .eq("id", id);
   if (error) throw error;
 }
 
