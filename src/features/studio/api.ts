@@ -163,3 +163,15 @@ export async function createQuestion(input: CreateQuestionInput): Promise<Questi
   if (error) throw error;
   return mapQuestion(data as QuestionRow);
 }
+
+/** Only the wording is editable — stable_key/type/config stay fixed once
+ * created (spec section 6.2: rewording must not break Scene bindings). */
+export async function updateQuestionPrompt(id: string, prompt: { he: string; en: string }): Promise<void> {
+  const { error } = await supabase.from("questions").update({ prompt_he: prompt.he, prompt_en: prompt.en }).eq("id", id);
+  if (error) throw error;
+}
+
+export async function deleteQuestion(id: string): Promise<void> {
+  const { error } = await supabase.from("questions").delete().eq("id", id);
+  if (error) throw error;
+}

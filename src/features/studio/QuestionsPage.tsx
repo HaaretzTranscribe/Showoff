@@ -3,8 +3,8 @@ import { useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useI18n } from "@/i18n/I18nProvider";
 import { errorMessage } from "@/lib/errorMessage";
-import type { QuestionType } from "@/domain/types";
-import { createQuestion, listQuestions } from "./api";
+import type { Question, QuestionType } from "@/domain/types";
+import { createQuestion, deleteQuestion, listQuestions, updateQuestionPrompt } from "./api";
 
 /** Generates a stable_key the instructor never has to think about — it
  * only needs to be unique and never change, not mean anything to them. */
@@ -126,11 +126,71 @@ export function QuestionsPage() {
 
       <ol>
         {questionsQuery.data?.map((q) => (
-          <li key={q.id}>
-            [{q.type}] {q.prompt.he || q.prompt.en}
-          </li>
+          <QuestionRow key={q.id} question={q} lessonId={lessonId} />
         ))}
       </ol>
     </section>
+  );
+}
+
+function QuestionRow({ question, lessonId }: { question: Question; lessonId: string }) {
+  const { t, locale } = useI18n();
+  const queryClient = useQueryClient();
+  const [editing, setEditing] = useState(false);
+  const [promptHe, setPromptHe] = useState(question.prompt.he);
+  const [promptEn, setPromptEn] = useState(question.prompt.en);
+
+  const updateMutation = useMutation({
+    mutationFn: () => updateQuestionPrompt(question.id, { he: promptHe, en: promptEn }),
+    onSuccess: () => {
+      setEditing(false);
+      queryClient.invalidateQueries({ queryKey: ["questions", lessonId] });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: () => deleteQuestion(question.id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["questions", lessonId] }),
+  });
+
+  if (editing) {
+    return (
+      <li>
+        <label>
+          {t("studio.questions.promptHe")}
+          <input value={promptHe} onChange={(e) => setPromptHe(e.target.value)} dir="rtl" />
+        </label>
+        <label>
+          {t("studio.questions.promptEn")}
+          <input value={promptEn} onChange={(e) => setPromptEn(e.target.value)} dir="ltr" />
+        </label>
+        <button type="button" onClick={() => updateMutation.mutate()} disabled={updateMutation.isPending}>
+          {t("common.save")}
+        </button>
+        <button type="button" onClick={() => setEditing(false)}>
+          {t("common.cancel")}
+        </button>
+        {updateMutation.isError && <span role="alert">{errorMessage(updateMutation.error)}</span>}
+      </li>
+    );
+  }
+
+  return (
+    <li>
+      [{question.type}] {question.prompt[locale] || question.prompt.he || question.prompt.en}{" "}
+      <button type="button" onClick={() => setEditing(true)}>
+        {t("common.edit")}
+      </button>
+      <button
+        type="button"
+        onClick={() => {
+          if (window.confirm(t("common.confirmDelete"))) deleteMutation.mutate();
+        }}
+        disabled={deleteMutation.isPending}
+      >
+        {t("common.delete")}
+      </button>
+      {deleteMutation.isError && <span role="alert">{errorMessage(deleteMutation.error)}</span>}
+    </li>
   );
 }
