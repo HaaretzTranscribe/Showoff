@@ -40,13 +40,20 @@ export async function createCourse(title: string): Promise<Course> {
     .single();
   if (appUserError || !appUser) throw new Error("instructor profile not found");
 
-  const { data, error } = await supabase
-    .from("courses")
-    .insert({ title, owner_user_id: appUser.id })
-    .select("*")
-    .single();
-  if (error) throw error;
-  return mapCourse(data as CourseRow);
+  // Deliberately NOT .insert(...).select().single(): Postgres evaluates
+  // RETURNING's row-visibility against SELECT policies as part of the
+  // same INSERT statement, before the on_course_created trigger (which
+  // grants the owner's course_members row) has necessarily taken
+  // effect for that check. Insert with a client-generated id, then
+  // fetch it back as a separate request — by then the trigger has
+  // fully committed and courses_select_member passes normally.
+  const id = crypto.randomUUID();
+  const { error: insertError } = await supabase.from("courses").insert({ id, title, owner_user_id: appUser.id });
+  if (insertError) throw insertError;
+
+  const { data: created, error: fetchError } = await supabase.from("courses").select("*").eq("id", id).single();
+  if (fetchError) throw fetchError;
+  return mapCourse(created as CourseRow);
 }
 
 // --- Lessons ---
