@@ -72,6 +72,25 @@ export async function openResponses(classSessionId: string): Promise<ClassSessio
   return mapClassSession(data as ClassSessionRow);
 }
 
+export interface AttendanceRow {
+  displayName: string;
+  joinedAt: string;
+}
+
+/** Roll-call list for a session — names only, never joined to responses (spec section 18). */
+export async function listAttendance(classSessionId: string): Promise<AttendanceRow[]> {
+  const { data, error } = await supabase
+    .from("attendance_records")
+    .select("display_name, created_at")
+    .eq("class_session_id", classSessionId)
+    .order("created_at", { ascending: true });
+  if (error) throw error;
+  return (data as { display_name: string; created_at: string }[]).map((row) => ({
+    displayName: row.display_name,
+    joinedAt: row.created_at,
+  }));
+}
+
 export async function listSessionsForLesson(lessonId: string): Promise<ClassSession[]> {
   const { data, error } = await supabase
     .from("class_sessions")

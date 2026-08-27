@@ -5,7 +5,7 @@ import { useI18n } from "@/i18n/I18nProvider";
 import { errorMessage } from "@/lib/errorMessage";
 import type { Lesson, RosterPolicy } from "@/domain/types";
 import { createLesson, listLessons } from "./api";
-import { openResponses, openSession } from "./sessions";
+import { listAttendance, openResponses, openSession, type AttendanceRow } from "./sessions";
 
 export function LessonsPage() {
   const { t } = useI18n();
@@ -91,6 +91,18 @@ export function LessonsPage() {
   );
 }
 
+function downloadAttendanceCsv(rows: AttendanceRow[], filename: string) {
+  const escapeCell = (value: string) => `"${value.replace(/"/g, '""')}"`;
+  const lines = ["name,joined_at", ...rows.map((r) => `${escapeCell(r.displayName)},${r.joinedAt}`)];
+  const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
 function LessonRow({ lesson }: { lesson: Lesson }) {
   const { t } = useI18n();
   const [opened, setOpened] = useState<{ classSessionId: string; code: string } | null>(null);
@@ -105,6 +117,11 @@ function LessonRow({ lesson }: { lesson: Lesson }) {
   const openResponsesMutation = useMutation({
     mutationFn: () => openResponses(opened!.classSessionId),
     onSuccess: () => setResponsesOpen(true),
+  });
+
+  const exportAttendanceMutation = useMutation({
+    mutationFn: () => listAttendance(opened!.classSessionId),
+    onSuccess: (rows) => downloadAttendanceCsv(rows, `attendance-${opened!.classSessionId}.csv`),
   });
 
   const joinUrl = opened ? `${window.location.origin}/join?s=${opened.classSessionId}` : null;
@@ -138,6 +155,17 @@ function LessonRow({ lesson }: { lesson: Lesson }) {
             <span role="alert">{errorMessage(openResponsesMutation.error)}</span>
           )}
           <Link to={`/present/${opened.classSessionId}`}>{t("studio.lessons.openPresentation")}</Link>
+          {" — "}
+          <button
+            type="button"
+            onClick={() => exportAttendanceMutation.mutate()}
+            disabled={exportAttendanceMutation.isPending}
+          >
+            {t("studio.lessons.exportAttendance")}
+          </button>
+          {exportAttendanceMutation.isError && (
+            <span role="alert">{errorMessage(exportAttendanceMutation.error)}</span>
+          )}
         </div>
       )}
     </li>

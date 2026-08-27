@@ -58,6 +58,7 @@ const en = {
       openResponses: "Open questionnaire",
       sessionCode: "Class code",
       openPresentation: "Open presentation screen",
+      exportAttendance: "Export attendance (CSV)",
       joinUrlHint: "Students join at",
     },
     questions: {
@@ -129,6 +130,7 @@ const he: Translation<typeof en> = {
       openResponses: "פתיחת שאלון",
       sessionCode: "קוד כיתה",
       openPresentation: "פתיחת מסך הקרנה",
+      exportAttendance: "ייצוא נוכחות (CSV)",
       joinUrlHint: "סטודנטים מצטרפים ב",
     },
     questions: {
