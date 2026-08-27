@@ -35,6 +35,11 @@ export function CoursesPage() {
         <button type="submit" disabled={createMutation.isPending}>
           {t("studio.courses.newCourse")}
         </button>
+        {createMutation.isError && (
+          <p role="alert">
+            {createMutation.error instanceof Error ? createMutation.error.message : String(createMutation.error)}
+          </p>
+        )}
       </form>
 
       {coursesQuery.isLoading && <p>{t("common.loading")}</p>}

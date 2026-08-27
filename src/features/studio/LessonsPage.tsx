@@ -74,6 +74,11 @@ export function LessonsPage() {
         <button type="submit" disabled={createMutation.isPending || (!titleHe.trim() && !titleEn.trim())}>
           {t("studio.lessons.newLesson")}
         </button>
+        {createMutation.isError && (
+          <p role="alert">
+            {createMutation.error instanceof Error ? createMutation.error.message : String(createMutation.error)}
+          </p>
+        )}
       </form>
 
       {lessonsQuery.isLoading && <p>{t("common.loading")}</p>}
@@ -114,6 +119,11 @@ function LessonRow({ lesson }: { lesson: Lesson }) {
       <button type="button" onClick={() => openMutation.mutate()} disabled={openMutation.isPending}>
         {t("studio.lessons.openSession")}
       </button>
+      {openMutation.isError && (
+        <span role="alert">
+          {openMutation.error instanceof Error ? openMutation.error.message : String(openMutation.error)}
+        </span>
+      )}
       {opened && (
         <div>
           <p>
@@ -130,6 +140,13 @@ function LessonRow({ lesson }: { lesson: Lesson }) {
             >
               {t("studio.lessons.openResponses")}
             </button>
+          )}
+          {openResponsesMutation.isError && (
+            <span role="alert">
+              {openResponsesMutation.error instanceof Error
+                ? openResponsesMutation.error.message
+                : String(openResponsesMutation.error)}
+            </span>
           )}
           <Link to={`/present/${opened.classSessionId}`}>{t("studio.lessons.openPresentation")}</Link>
         </div>
