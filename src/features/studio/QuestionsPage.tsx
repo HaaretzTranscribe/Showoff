@@ -3,9 +3,14 @@ import { useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useI18n } from "@/i18n/I18nProvider";
 import { errorMessage } from "@/lib/errorMessage";
-import { stableKeySchema } from "@/domain/validation";
 import type { QuestionType } from "@/domain/types";
 import { createQuestion, listQuestions } from "./api";
+
+/** Generates a stable_key the instructor never has to think about — it
+ * only needs to be unique and never change, not mean anything to them. */
+function generateStableKey(): string {
+  return `q_${crypto.randomUUID().replace(/-/g, "").slice(0, 12)}`;
+}
 
 const QUESTION_TYPES: QuestionType[] = [
   "single_choice",
@@ -23,14 +28,12 @@ export function QuestionsPage() {
   const { lessonId } = useParams<{ lessonId: string }>();
   const queryClient = useQueryClient();
 
-  const [stableKey, setStableKey] = useState("");
   const [type, setType] = useState<QuestionType>("single_choice");
   const [promptHe, setPromptHe] = useState("");
   const [promptEn, setPromptEn] = useState("");
   const [scaleMin, setScaleMin] = useState(1);
   const [scaleMax, setScaleMax] = useState(5);
   const [scaleStep, setScaleStep] = useState(1);
-  const [stableKeyError, setStableKeyError] = useState<string | null>(null);
 
   const questionsQuery = useQuery({
     queryKey: ["questions", lessonId],
@@ -41,7 +44,6 @@ export function QuestionsPage() {
   const createMutation = useMutation({
     mutationFn: createQuestion,
     onSuccess: () => {
-      setStableKey("");
       setPromptHe("");
       setPromptEn("");
       queryClient.invalidateQueries({ queryKey: ["questions", lessonId] });
@@ -64,16 +66,9 @@ export function QuestionsPage() {
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          const trimmedKey = stableKey.trim();
-          const keyCheck = stableKeySchema.safeParse(trimmedKey);
-          if (!keyCheck.success) {
-            setStableKeyError(keyCheck.error.issues[0]?.message ?? "invalid stable key");
-            return;
-          }
-          setStableKeyError(null);
           createMutation.mutate({
             lessonId,
-            stableKey: trimmedKey,
+            stableKey: generateStableKey(),
             type,
             prompt: { he: promptHe, en: promptEn },
             orderIndex: questionsQuery.data?.length ?? 0,
@@ -81,18 +76,6 @@ export function QuestionsPage() {
           });
         }}
       >
-        <label>
-          {t("studio.questions.stableKey")}
-          <input
-            value={stableKey}
-            onChange={(e) => {
-              setStableKey(e.target.value);
-              setStableKeyError(null);
-            }}
-            placeholder="q_sleep_hours"
-          />
-        </label>
-        {stableKeyError && <p role="alert">{stableKeyError}</p>}
         <label>
           {t("studio.questions.type")}
           <select value={type} onChange={(e) => setType(e.target.value as QuestionType)}>
@@ -131,7 +114,7 @@ export function QuestionsPage() {
 
         <button
           type="submit"
-          disabled={createMutation.isPending || !stableKey.trim() || (!promptHe.trim() && !promptEn.trim())}
+          disabled={createMutation.isPending || (!promptHe.trim() && !promptEn.trim())}
         >
           {t("studio.questions.newQuestion")}
         </button>
@@ -144,7 +127,7 @@ export function QuestionsPage() {
       <ol>
         {questionsQuery.data?.map((q) => (
           <li key={q.id}>
-            [{q.type}] {q.prompt.he || q.prompt.en} ({q.stableKey})
+            [{q.type}] {q.prompt.he || q.prompt.en}
           </li>
         ))}
       </ol>

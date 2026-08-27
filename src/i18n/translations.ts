@@ -64,7 +64,6 @@ const en = {
     questions: {
       title: "Questions",
       newQuestion: "New question",
-      stableKey: "Stable key",
       type: "Type",
       promptHe: "Prompt (Hebrew)",
       promptEn: "Prompt (English)",
@@ -136,7 +135,6 @@ const he: Translation<typeof en> = {
     questions: {
       title: "שאלות",
       newQuestion: "שאלה חדשה",
-      stableKey: "מזהה קבוע",
       type: "סוג",
       promptHe: "ניסוח (עברית)",
       promptEn: "ניסוח (אנגלית)",
