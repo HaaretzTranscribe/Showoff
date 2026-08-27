@@ -24,7 +24,10 @@ export function normalizeIdentifier(raw: string): string {
   return stripped.toUpperCase();
 }
 
+/** Checked against the raw trimmed input, not the normalized form —
+ * normalizeIdentifier pads short numeric strings to 9 digits, which
+ * would otherwise mask a too-short input like "1" as plausible. */
 export function isPlausibleIdentifier(raw: string): boolean {
-  const normalized = normalizeIdentifier(raw);
-  return normalized.length >= 3 && normalized.length <= 64;
+  const trimmed = raw.trim();
+  return trimmed.length >= 3 && trimmed.length <= 64;
 }
