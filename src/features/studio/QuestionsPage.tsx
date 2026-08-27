@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useI18n } from "@/i18n/I18nProvider";
+import { errorMessage } from "@/lib/errorMessage";
 import type { QuestionType } from "@/domain/types";
 import { createQuestion, listQuestions } from "./api";
 
@@ -123,7 +124,7 @@ export function QuestionsPage() {
         >
           {t("studio.questions.newQuestion")}
         </button>
-        {createMutation.isError && <p role="alert">{t("common.error")}</p>}
+        {createMutation.isError && <p role="alert">{errorMessage(createMutation.error)}</p>}
       </form>
 
       {questionsQuery.isLoading && <p>{t("common.loading")}</p>}

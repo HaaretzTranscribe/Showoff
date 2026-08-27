@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useI18n } from "@/i18n/I18nProvider";
+import { errorMessage } from "@/lib/errorMessage";
 import type { Lesson, RosterPolicy } from "@/domain/types";
 import { createLesson, listLessons } from "./api";
 import { openResponses, openSession } from "./sessions";
@@ -74,11 +75,7 @@ export function LessonsPage() {
         <button type="submit" disabled={createMutation.isPending || (!titleHe.trim() && !titleEn.trim())}>
           {t("studio.lessons.newLesson")}
         </button>
-        {createMutation.isError && (
-          <p role="alert">
-            {createMutation.error instanceof Error ? createMutation.error.message : String(createMutation.error)}
-          </p>
-        )}
+        {createMutation.isError && <p role="alert">{errorMessage(createMutation.error)}</p>}
       </form>
 
       {lessonsQuery.isLoading && <p>{t("common.loading")}</p>}
@@ -119,11 +116,7 @@ function LessonRow({ lesson }: { lesson: Lesson }) {
       <button type="button" onClick={() => openMutation.mutate()} disabled={openMutation.isPending}>
         {t("studio.lessons.openSession")}
       </button>
-      {openMutation.isError && (
-        <span role="alert">
-          {openMutation.error instanceof Error ? openMutation.error.message : String(openMutation.error)}
-        </span>
-      )}
+      {openMutation.isError && <span role="alert">{errorMessage(openMutation.error)}</span>}
       {opened && (
         <div>
           <p>
@@ -142,11 +135,7 @@ function LessonRow({ lesson }: { lesson: Lesson }) {
             </button>
           )}
           {openResponsesMutation.isError && (
-            <span role="alert">
-              {openResponsesMutation.error instanceof Error
-                ? openResponsesMutation.error.message
-                : String(openResponsesMutation.error)}
-            </span>
+            <span role="alert">{errorMessage(openResponsesMutation.error)}</span>
           )}
           <Link to={`/present/${opened.classSessionId}`}>{t("studio.lessons.openPresentation")}</Link>
         </div>

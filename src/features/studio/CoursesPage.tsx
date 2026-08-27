@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useI18n } from "@/i18n/I18nProvider";
+import { errorMessage } from "@/lib/errorMessage";
 import { createCourse, listCourses } from "./api";
 
 export function CoursesPage() {
@@ -35,11 +36,7 @@ export function CoursesPage() {
         <button type="submit" disabled={createMutation.isPending}>
           {t("studio.courses.newCourse")}
         </button>
-        {createMutation.isError && (
-          <p role="alert">
-            {createMutation.error instanceof Error ? createMutation.error.message : String(createMutation.error)}
-          </p>
-        )}
+        {createMutation.isError && <p role="alert">{errorMessage(createMutation.error)}</p>}
       </form>
 
       {coursesQuery.isLoading && <p>{t("common.loading")}</p>}
