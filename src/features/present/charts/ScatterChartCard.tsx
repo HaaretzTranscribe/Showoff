@@ -23,7 +23,7 @@ interface PointShapeProps {
 function PointShape({ cx, cy, payload }: PointShapeProps) {
   if (cx === undefined || cy === undefined || !payload) return null;
   return (
-    <g transform={`translate(${cx}, ${cy})`}>
+    <g transform={`translate(${cx}, ${cy}) scale(3)`}>
       <circle r={9} fill={payload.color} />
       {payload.method && <TransportIcon method={payload.method} />}
     </g>
