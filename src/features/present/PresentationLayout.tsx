@@ -7,12 +7,14 @@ export function PresentationLayout({
   lastUpdated,
   onRefresh,
   dark = false,
+  respondentCount = null,
   children,
 }: {
   title: string;
   lastUpdated: Date | null;
   onRefresh: () => void;
   dark?: boolean;
+  respondentCount?: number | null;
   children: ReactNode;
 }) {
   const { t, lang } = useI18n();
@@ -25,6 +27,11 @@ export function PresentationLayout({
         }`}
       >
         <div className="flex items-center gap-3">
+          {respondentCount !== null && (
+            <span className={`text-xs ${dark ? "text-white/40" : "text-slate-400"}`}>
+              {respondentCount} {t.present.respondents}
+            </span>
+          )}
           {lastUpdated && (
             <span className={`text-xs ${dark ? "text-white/40" : "text-slate-400"}`}>
               {lastUpdated.toLocaleTimeString(lang === "he" ? "he-IL" : "en-US")}

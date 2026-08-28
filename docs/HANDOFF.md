@@ -73,7 +73,7 @@ re-publishes a sheet.
 | `/join/:sessionSlug` | student | roll-call Form embed → Continue |
 | `/live/:sessionSlug` | student | waiting screen ↔ active question Form (polls every 3s) |
 | `/control/:sessionSlug` | instructor, unlisted | click a question to make it live |
-| `/present/:sessionSlug/:vizId` | instructor, unlisted | one chart, `vizId` 1-11 for lesson 1 (self-refreshes every 5 min) |
+| `/present/:sessionSlug/:vizId` | instructor, unlisted | one chart, `vizId` 1-12 for lesson 1 (self-refreshes every 5 min) |
 
 `:sessionSlug` is usually a `lesson_number` (`1`-`12`, `1e`-`12e` for
 parallel Hebrew/English tracks), not a random slug.
@@ -129,7 +129,7 @@ infra (or `netlify dev`, untested this session). Verification this
 session was done by deploying and testing against the live site with
 two browser tabs (instructor + student).
 
-## The 11 lesson-1 visualizations
+## The 12 lesson-1 visualizations
 
 Hand-written per lesson in `src/features/present/lesson1Visualizations.ts`
 + a small registry in `PresentationPage.tsx` — **deliberately not** a
@@ -138,21 +138,23 @@ why). Response CSVs are parsed **positionally** (column 0 = Timestamp,
 then in Form-field order), not by header name, because Google's CSV
 header is the literal Hebrew question text and the existing
 `parseCsvRecords` normalizer would collapse every Hebrew column to an
-empty key.
+empty key. Every viz's header bar also shows the respondent count
+(`table.rows.length` for that question) next to the refresh button.
 
 | # | Reads | Shows |
 |---|---|---|
 | 1 | Q1 | Yes/No, % of respondents |
 | 2 | Q2 | 4-point satisfaction scale, % of respondents |
-| 3 | Q2 | collapsed to positive (top 2 levels) vs negative (bottom 2), % |
-| 4 | Q3 | transport method, % of respondents |
-| 5 | Q3 | % dissatisfied per transport method |
-| 6 | Q4 | mean monthly cost (₪), big number |
-| 7 | Q4 | median monthly cost (₪), big number |
-| 8 | Q4 | median commute time, big number |
-| 9 | Q4 | % dissatisfied per time quartile, **labeled with each quartile's actual time range** (e.g. "רבעון 1 (1-12 דקות)") |
-| 10 | Q4 | time-vs-cost scatter, 3-color by satisfaction (blue=very satisfied, red=very dissatisfied, purple=both middle levels); **excludes the single highest-time and single lowest-time response** |
-| 11 | Q5 | 3 most recent "very dissatisfied" free-text experiences, black screen / big red text, most-recent-first with fallback to the next-worst level if fewer than 3 exist; trailing "." stripped from each quote |
+| 3 | Q2 | collapsed to "satisfied to any degree" (top 3 levels) vs "not satisfied at all" (bottom 1 alone), % |
+| 4 | Q2 | mirror image of #3: "very satisfied" (top 1 alone) vs "dissatisfied to any degree" (bottom 3 levels), % |
+| 5 | Q3 | transport method, % of respondents |
+| 6 | Q3 | % dissatisfied per transport method |
+| 7 | Q4 | mean monthly cost (₪), big number |
+| 8 | Q4 | median monthly cost (₪), big number |
+| 9 | Q4 | median commute time, big number |
+| 10 | Q4 | % dissatisfied per time quartile, **labeled with each quartile's actual time range** (e.g. "רבעון 1 (1-12 דקות)") |
+| 11 | Q4 | time-vs-cost scatter, 3-color by satisfaction (blue=very satisfied, red=very dissatisfied, purple=both middle levels); **excludes the single highest-time and single lowest-time response**; each point also shows a white transport-method icon, at 3x the original point/icon size |
+| 12 | Q5 | 3 most recent "very dissatisfied" free-text experiences, black screen / big red text, most-recent-first with fallback to the next-worst level if fewer than 3 exist; trailing "." stripped from each quote; excludes answers that are *entirely* a stock "everything's fine" phrase (hardcoded denylist, not real sentiment analysis — see the visualizations addendum) |
 
 Two explicit assumptions made this session that were never fully
 confirmed — revisit if they turn out wrong:

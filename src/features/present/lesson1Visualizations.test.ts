@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { viz1, viz3, viz5, viz9, viz10, viz11 } from "./lesson1Visualizations";
+import { viz1, viz3, viz4, viz6, viz10, viz11, viz12 } from "./lesson1Visualizations";
 import type { ResponseTable } from "@/lib/responses";
 
 function table(rows: string[][]): ResponseTable {
@@ -16,8 +16,8 @@ describe("viz1 — Q1 Yes/No as % of respondents", () => {
   });
 });
 
-describe("viz3 — Q2 positive/negative collapse, as %", () => {
-  it("groups the top two levels as positive and bottom two as negative", () => {
+describe("viz3 — Q2 collapsed to 3 pleased levels vs the single very-displeased level, as %", () => {
+  it("groups the top three levels together against the bottom level alone", () => {
     const rows = [
       ["t", "מרוצה מאוד"],
       ["t", "מרוצה חלקית"],
@@ -26,30 +26,45 @@ describe("viz3 — Q2 positive/negative collapse, as %", () => {
       ["t", "לא מרוצה כלל"],
     ];
     const result = viz3(table(rows));
-    expect(result.find((r) => r.label === "חיובי")?.value).toBe(40);
-    expect(result.find((r) => r.label === "שלילי")?.value).toBe(60);
+    expect(result.find((r) => r.label === "מרוצים ברמה כלשהי")?.value).toBe(60);
+    expect(result.find((r) => r.label === "לא מרוצים כלל")?.value).toBe(40);
   });
 });
 
-describe("viz5 — % dissatisfied per transport method", () => {
+describe("viz4 — Q2 collapsed to 3 displeased levels vs the single very-pleased level, as %", () => {
+  it("groups the bottom three levels together against the top level alone", () => {
+    const rows = [
+      ["t", "מרוצה מאוד"],
+      ["t", "מרוצה חלקית"],
+      ["t", "לא כל כך מרוצה"],
+      ["t", "לא מרוצה כלל"],
+      ["t", "לא מרוצה כלל"],
+    ];
+    const result = viz4(table(rows));
+    expect(result.find((r) => r.label === "מרוצים מאוד")?.value).toBe(20);
+    expect(result.find((r) => r.label === "לא מרוצים ברמה כלשהי")?.value).toBe(80);
+  });
+});
+
+describe("viz6 — % dissatisfied per transport method", () => {
   it("computes percentage negative within each method group", () => {
     const rows = [
       ["t", "מרוצה מאוד", "באוטובוס"],
       ["t", "לא מרוצה כלל", "באוטובוס"],
       ["t", "מרוצה חלקית", "ברגל"],
     ];
-    const result = viz5(table(rows));
+    const result = viz6(table(rows));
     expect(result.find((r) => r.label === "באוטובוס")?.value).toBe(50);
     expect(result.find((r) => r.label === "ברגל")?.value).toBe(0);
   });
 
   it("skips rows missing method or satisfaction", () => {
-    const result = viz5(table([["t", "", "באוטובוס"], ["t", "מרוצה מאוד", ""]]));
+    const result = viz6(table([["t", "", "באוטובוס"], ["t", "מרוצה מאוד", ""]]));
     expect(result).toEqual([]);
   });
 });
 
-describe("viz9 — % dissatisfied per time quartile", () => {
+describe("viz10 — % dissatisfied per time quartile", () => {
   it("splits into 4 roughly-equal groups ordered by time, labeled with their range", () => {
     // 8 rows -> 2 per quartile; times 1..8, negative only for the slowest 2
     const rows = Array.from({ length: 8 }, (_, i) => {
@@ -57,7 +72,7 @@ describe("viz9 — % dissatisfied per time quartile", () => {
       const satisfaction = i >= 6 ? "לא מרוצה כלל" : "מרוצה מאוד";
       return ["t", satisfaction, "", "", time];
     });
-    const result = viz9(table(rows));
+    const result = viz10(table(rows));
     expect(result).toHaveLength(4);
     expect(result[0].value).toBe(0); // fastest quartile, all satisfied
     expect(result[0].label).toContain("1-2");
@@ -66,11 +81,11 @@ describe("viz9 — % dissatisfied per time quartile", () => {
   });
 
   it("returns an empty array when no time values are parseable", () => {
-    expect(viz9(table([["t", "מרוצה מאוד", "", "", "not a number"]]))).toEqual([]);
+    expect(viz10(table([["t", "מרוצה מאוד", "", "", "not a number"]]))).toEqual([]);
   });
 });
 
-describe("viz10 — scatter groups by satisfaction, excluding time outliers", () => {
+describe("viz11 — scatter groups by satisfaction, excluding time outliers", () => {
   it("excludes the single highest-time and single lowest-time response", () => {
     const rows = [
       ["t", "מרוצה מאוד", "", "500", "5"], // lowest time -> excluded
@@ -79,7 +94,7 @@ describe("viz10 — scatter groups by satisfaction, excluding time outliers", ()
       ["t", "לא מרוצה כלל", "", "700", "40"],
       ["t", "לא מרוצה כלל", "", "900", "99"], // highest time -> excluded
     ];
-    const groups = viz10(table(rows));
+    const groups = viz11(table(rows));
     const allPoints = groups.flatMap((g) => g.points);
     expect(allPoints).toHaveLength(3);
     expect(allPoints.some((p) => p.x === 5)).toBe(false);
@@ -93,13 +108,13 @@ describe("viz10 — scatter groups by satisfaction, excluding time outliers", ()
       ["t", "לא מרוצה כלל", "", "700", "40"],
     ];
     // Only 3 rows: min/max time excluded, leaving just the middle (mixed) point.
-    const groups = viz10(table(rows));
+    const groups = viz11(table(rows));
     const allPoints = groups.flatMap((g) => g.points);
     expect(allPoints).toEqual([{ x: 30, y: 600 }]);
   });
 });
 
-describe("viz11 — three worst experiences", () => {
+describe("viz12 — three worst experiences", () => {
   it("prefers the most recent very-negative responses", () => {
     const rows = [
       ["t", "לא מרוצה כלל", "old bad one"],
@@ -107,7 +122,7 @@ describe("viz11 — three worst experiences", () => {
       ["t", "לא מרוצה כלל", "recent bad one"],
       ["t", "לא מרוצה כלל", "most recent bad one"],
     ];
-    const result = viz11(table(rows));
+    const result = viz12(table(rows));
     expect(result).toEqual(["most recent bad one", "recent bad one", "old bad one"]);
   });
 
@@ -116,7 +131,7 @@ describe("viz11 — three worst experiences", () => {
       ["t", "לא מרוצה כלל", "the one bad one"],
       ["t", "לא כל כך מרוצה", "somewhat bad"],
     ];
-    const result = viz11(table(rows));
+    const result = viz12(table(rows));
     expect(result).toEqual(["the one bad one", "somewhat bad"]);
   });
 
@@ -125,12 +140,12 @@ describe("viz11 — three worst experiences", () => {
       ["t", "לא מרוצה כלל", "היה נורא."],
       ["t", "לא מרוצה כלל", "למה זה קורה?"],
     ];
-    const result = viz11(table(rows));
+    const result = viz12(table(rows));
     expect(result).toEqual(["למה זה קורה?", "היה נורא"]);
   });
 
   it("returns an empty array when there are no responses", () => {
-    expect(viz11(table([]))).toEqual([]);
+    expect(viz12(table([]))).toEqual([]);
   });
 
   it("excludes a stock no-complaint phrase even when tagged very-negative", () => {
@@ -138,13 +153,13 @@ describe("viz11 — three worst experiences", () => {
       ["t", "לא מרוצה כלל", "הכל טוב"],
       ["t", "לא מרוצה כלל", "אני נוסע שעה בפקקים כל יום וזה בלתי נסבל"],
     ];
-    const result = viz11(table(rows));
+    const result = viz12(table(rows));
     expect(result).toEqual(["אני נוסע שעה בפקקים כל יום וזה בלתי נסבל"]);
   });
 
   it("keeps a short but genuinely negative quote (not filtered by length)", () => {
     const rows = [["t", "לא מרוצה כלל", "הכל ממש זוועה"]];
-    const result = viz11(table(rows));
+    const result = viz12(table(rows));
     expect(result).toEqual(["הכל ממש זוועה"]);
   });
 });

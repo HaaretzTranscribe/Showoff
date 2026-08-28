@@ -24,7 +24,7 @@ data.
 
 ## Why this isn't a generic sheet-driven engine
 
-The 11 visualizations for lesson 1 were specified individually, each
+The 12 visualizations for lesson 1 were specified individually, each
 with its own aggregation logic (collapsing 4-point scales to
 positive/negative, cross-referencing satisfaction against transport
 method, quartile-bucketing a numeric field, a 3-way color-coded
@@ -87,32 +87,48 @@ Form itself), so `parseLenientNumber` extracts the first number-like
 substring and silently skips rows where nothing parses, rather than
 crashing on stray text.
 
-## The 11 visualizations and their assumptions
+## The 12 visualizations and their assumptions
 
 | # | Question | Chart | Logic |
 |---|---|---|---|
 | 1 | Q1 | Bar | Raw Yes/No counts |
 | 2 | Q2 | Bar | Raw 4-point scale counts |
-| 3 | Q2 | Bar | Top 2 levels = "positive," bottom 2 = "negative" |
-| 4 | Q3 | Bar | Raw transport-method counts |
-| 5 | Q3 | Bar (%) | % of each method's respondents in the bottom 2 satisfaction levels |
-| 6 | Q4 | Big number | Mean monthly cost |
-| 7 | Q4 | Big number | Median monthly cost |
-| 8 | Q4 | Big number | Median commute time |
-| 9 | Q4 | Bar (%) | Split respondents into 4 equal-sized groups by commute time (fastest→slowest quartile), % in bottom 2 satisfaction levels per group |
-| 10 | Q4 | Scatter | x = time, y = cost; blue = "very satisfied" only, red = "not satisfied at all" only, purple = **both** middle levels |
-| 11 | Q5 | Black screen, red text | 3 most recent free-text responses among "not satisfied at all"; if fewer than 3 exist, fills remaining slots from "not so satisfied," most recent first. "Most recent" = last rows in the CSV (Forms appends new responses at the bottom) — timestamps are not parsed |
+| 3 | Q2 | Bar | Top 3 levels grouped ("satisfied to any degree") vs the single bottom level alone ("not satisfied at all") |
+| 4 | Q2 | Bar | Mirror image of #3: the single top level alone ("very satisfied") vs bottom 3 levels grouped ("dissatisfied to any degree") — deliberately asymmetric 3-vs-1 splits on both sides, to demonstrate how the same data tells a different story depending on which categories get lumped together |
+| 5 | Q3 | Bar | Raw transport-method counts |
+| 6 | Q3 | Bar (%) | % of each method's respondents in the bottom 2 satisfaction levels |
+| 7 | Q4 | Big number | Mean monthly cost |
+| 8 | Q4 | Big number | Median monthly cost |
+| 9 | Q4 | Big number | Median commute time |
+| 10 | Q4 | Bar (%) | Split respondents into 4 equal-sized groups by commute time (fastest→slowest quartile), % in bottom 2 satisfaction levels per group |
+| 11 | Q4 | Scatter | x = time, y = cost; blue = "very satisfied" only, red = "not satisfied at all" only, purple = **both** middle levels |
+| 12 | Q5 | Black screen, red text | 3 most recent free-text responses among "not satisfied at all"; if fewer than 3 exist, fills remaining slots from "not so satisfied," most recent first. "Most recent" = last rows in the CSV (Forms appends new responses at the bottom) — timestamps are not parsed. Excludes responses whose free text is *entirely* a stock "everything's fine" phrase (see below) even if tagged "not satisfied at all" |
 
 All of these were confirmed against the instructor in chat before
-building; if a future lesson needs different collapsing/bucketing
+building (#3/#4 replaced an earlier, symmetric 2-vs-2 viz3 per later
+feedback); if a future lesson needs different collapsing/bucketing
 rules, don't assume these generalize — ask again, the same way.
+
+- **Viz 12's "no-complaint" filter is a hardcoded phrase denylist, not
+  sentiment analysis.** Real class data surfaced a row tagged "not
+  satisfied at all" whose free text was just "הכל טוב" ("all good") —
+  a genuine contradiction between the rating and the text, not a
+  parsing bug. The fix (`NO_COMPLAINT_PHRASES` in
+  `lesson1Visualizations.ts`) excludes an answer only when it's an
+  *exact* match against a short list of known filler phrases —
+  deliberately not a length filter, since a short-but-real complaint
+  ("הכל ממש זוועה") must still qualify. This catches the one known
+  real case but doesn't generalize to reworded positive text; true
+  sentiment detection of the free text itself (rather than trusting
+  the separate multiple-choice rating) would need a keyword scorer or
+  an LLM call and hasn't been built — flagged, not done.
 
 ## Known trade-offs
 
 - **Zero-value bars don't render.** Recharts skips generating any
   geometry for a bar whose value is exactly 0, so a 0%/0-count result
   shows as a blank gap with no bar and no label, rather than a visible
-  "0%" bar. Ran into this via `viz3`/`viz5` with sparse test data (a
+  "0%" bar. Ran into this via `viz3`/`viz6` with sparse test data (a
   bar-chart animation bug in a different area — see below — led to
   discovering this one too). Not fixed; revisit if a real class result
   lands on exactly zero for a category and that reads as "missing
@@ -129,11 +145,11 @@ rules, don't assume these generalize — ask again, the same way.
 
 - Same 5-minute-poll trade-off as the rest of Phase 2's realtime
   pieces: not push, not instant.
-- `viz9`'s quartile split is by **response count**, not by fixed time
+- `viz10`'s quartile split is by **response count**, not by fixed time
   ranges (e.g. not "0-15 / 15-30 / 30-45 / 45+ minutes") — with few
   responses this can produce uneven-looking groups. Revisit if that
   matters pedagogically.
-- No caching/memoization between the 11 pages — if you have all 11
+- No caching/memoization between the 12 pages — if you have all 12
   tabs open, that's up to 5 separate response-sheet fetches every 5
   minutes (Q1-Q5, since several vizzes share a question). Fine at this
   scale; would need consolidating if this pattern scales to many more

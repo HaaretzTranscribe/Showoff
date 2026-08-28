@@ -32,7 +32,7 @@ function countBy(rows: string[][], col: number): Map<string, number> {
   return counts;
 }
 
-/** Converts counts to % of the total (rounded), rather than nominal counts — vizzes 1-5 are all normalized so bars are comparable regardless of how many students have responded so far. */
+/** Converts counts to % of the total (rounded), rather than nominal counts — vizzes 1-2 and 5 are all normalized so bars are comparable regardless of how many students have responded so far. */
 function toPercentBarData(counts: Map<string, number>, order?: string[]): BarDatum[] {
   const total = Array.from(counts.values()).reduce((sum, v) => sum + v, 0);
   const labels = order ?? Array.from(counts.keys());
@@ -64,25 +64,53 @@ export function viz2(table: ResponseTable): BarDatum[] {
   return toPercentBarData(countBy(table.rows, COL.q2.satisfaction), [...POSITIVE, ...NEGATIVE]);
 }
 
-/** Viz 3 — same Q2 data, collapsed to positive vs negative, as % of respondents. */
+/**
+ * Viz 3 — same Q2 data, collapsed to the 3 most-pleased levels (grouped)
+ * vs the single most-displeased level standing alone, as % of
+ * respondents. Deliberately asymmetric (3-vs-1, not 2-vs-2 like the old
+ * viz3 it replaces) — pairs with viz4's mirror-image grouping to show
+ * how the same underlying data tells a different story depending on
+ * which categories get lumped together.
+ */
 export function viz3(table: ResponseTable): BarDatum[] {
   const counts = countBy(table.rows, COL.q2.satisfaction);
-  const positive = POSITIVE.reduce((sum, k) => sum + (counts.get(k) ?? 0), 0);
-  const negative = NEGATIVE.reduce((sum, k) => sum + (counts.get(k) ?? 0), 0);
-  const total = positive + negative;
+  const total = Array.from(counts.values()).reduce((sum, v) => sum + v, 0);
+  const pleased = [VERY_POSITIVE, "מרוצה חלקית", "לא כל כך מרוצה"].reduce(
+    (sum, k) => sum + (counts.get(k) ?? 0),
+    0
+  );
+  const veryDispleased = counts.get(VERY_NEGATIVE) ?? 0;
   return [
-    { label: "חיובי", value: total > 0 ? Math.round((positive / total) * 100) : 0, color: BLUE },
-    { label: "שלילי", value: total > 0 ? Math.round((negative / total) * 100) : 0, color: RED },
+    { label: "מרוצים ברמה כלשהי", value: total > 0 ? Math.round((pleased / total) * 100) : 0, color: BLUE },
+    { label: "לא מרוצים כלל", value: total > 0 ? Math.round((veryDispleased / total) * 100) : 0, color: RED },
   ];
 }
 
-/** Viz 4 — bar chart, Q3's transportation method as % of respondents. */
+/**
+ * Viz 4 — mirror image of viz3: the 3 most-displeased levels (grouped)
+ * vs the single most-pleased level standing alone, as % of respondents.
+ */
 export function viz4(table: ResponseTable): BarDatum[] {
+  const counts = countBy(table.rows, COL.q2.satisfaction);
+  const total = Array.from(counts.values()).reduce((sum, v) => sum + v, 0);
+  const veryPleased = counts.get(VERY_POSITIVE) ?? 0;
+  const displeased = ["מרוצה חלקית", "לא כל כך מרוצה", VERY_NEGATIVE].reduce(
+    (sum, k) => sum + (counts.get(k) ?? 0),
+    0
+  );
+  return [
+    { label: "מרוצים מאוד", value: total > 0 ? Math.round((veryPleased / total) * 100) : 0, color: BLUE },
+    { label: "לא מרוצים ברמה כלשהי", value: total > 0 ? Math.round((displeased / total) * 100) : 0, color: RED },
+  ];
+}
+
+/** Viz 5 — bar chart, Q3's transportation method as % of respondents. */
+export function viz5(table: ResponseTable): BarDatum[] {
   return toPercentBarData(countBy(table.rows, COL.q3.method));
 }
 
-/** Viz 5 — % dissatisfied per transportation method, from Q3. */
-export function viz5(table: ResponseTable): BarDatum[] {
+/** Viz 6 — % dissatisfied per transportation method, from Q3. */
+export function viz6(table: ResponseTable): BarDatum[] {
   const byMethod = new Map<string, { total: number; negative: number }>();
   for (const row of table.rows) {
     const method = (row[COL.q3.method] ?? "").trim();
@@ -110,32 +138,32 @@ function costTimeRows(
   }));
 }
 
-/** Viz 6 — big number, average monthly cost from Q4. */
-export function viz6(table: ResponseTable): number {
+/** Viz 7 — big number, average monthly cost from Q4. */
+export function viz7(table: ResponseTable): number {
   const costs = costTimeRows(table)
     .map((r) => r.cost)
     .filter((c): c is number => c !== null);
   return mean(costs);
 }
 
-/** Viz 7 — big number, median monthly cost from Q4. */
-export function viz7(table: ResponseTable): number {
+/** Viz 8 — big number, median monthly cost from Q4. */
+export function viz8(table: ResponseTable): number {
   const costs = costTimeRows(table)
     .map((r) => r.cost)
     .filter((c): c is number => c !== null);
   return median(costs);
 }
 
-/** Viz 8 — big number, median commute time from Q4. */
-export function viz8(table: ResponseTable): number {
+/** Viz 9 — big number, median commute time from Q4. */
+export function viz9(table: ResponseTable): number {
   const times = costTimeRows(table)
     .map((r) => r.time)
     .filter((t): t is number => t !== null);
   return median(times);
 }
 
-/** Viz 9 — % dissatisfied per quartile of commute time, from Q4. */
-export function viz9(table: ResponseTable): BarDatum[] {
+/** Viz 10 — % dissatisfied per quartile of commute time, from Q4. */
+export function viz10(table: ResponseTable): BarDatum[] {
   const rows = costTimeRows(table).filter((r) => r.time !== null) as {
     satisfaction: string;
     time: number;
@@ -165,14 +193,14 @@ export function viz9(table: ResponseTable): BarDatum[] {
 }
 
 /**
- * Viz 10 — scatter, time vs cost, colored by satisfaction (blue/purple/red), from Q4.
+ * Viz 11 — scatter, time vs cost, colored by satisfaction (blue/purple/red), from Q4.
  * Excludes the single highest-time and single lowest-time response (outliers
  * on the time axis specifically, since time is the axis emphasized across
- * vizzes 8/9 too) — per instructor request, "should not include the highest
+ * vizzes 9/10 too) — per instructor request, "should not include the highest
  * and lowest number." If cost outliers should be excluded too/instead,
  * that needs a follow-up spec.
  */
-export function viz10(table: ResponseTable): ScatterGroup[] {
+export function viz11(table: ResponseTable): ScatterGroup[] {
   const allRows = costTimeRows(table).filter((r) => r.time !== null && r.cost !== null) as {
     satisfaction: string;
     method: string;
@@ -233,8 +261,8 @@ function isNoComplaintPhrase(text: string): boolean {
   return NO_COMPLAINT_PHRASES.has(stripTrailingPeriod(text).trim());
 }
 
-/** Viz 11 — the 3 most recent "very dissatisfied" free-text experiences from Q5. */
-export function viz11(table: ResponseTable): string[] {
+/** Viz 12 — the 3 most recent "very dissatisfied" free-text experiences from Q5. */
+export function viz12(table: ResponseTable): string[] {
   // Rows are in submission order; take from the end (most recent) first.
   const reversed = [...table.rows].reverse();
 

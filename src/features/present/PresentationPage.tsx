@@ -24,15 +24,16 @@ interface VizMeta {
 const VIZ_META: Record<string, VizMeta> = {
   "1": { questionNumber: "1", title: "שאלה 1 — האם מרוצה?" },
   "2": { questionNumber: "2", title: "שאלה 2 — מידת שביעות רצון" },
-  "3": { questionNumber: "2", title: "שאלה 2 — חיובי מול שלילי" },
-  "4": { questionNumber: "3", title: "שאלה 3 — איך מגיעים" },
-  "5": { questionNumber: "3", title: "שאלה 3 — % לא מרוצים לפי אמצעי הגעה" },
-  "6": { questionNumber: "4", title: "שאלה 4 — עלות חודשית ממוצעת" },
-  "7": { questionNumber: "4", title: "שאלה 4 — עלות חודשית חציונית" },
-  "8": { questionNumber: "4", title: "שאלה 4 — זמן הגעה חציוני" },
-  "9": { questionNumber: "4", title: "שאלה 4 — % לא מרוצים לפי רבעון זמן" },
-  "10": { questionNumber: "4", title: "שאלה 4 — זמן מול עלות" },
-  "11": { questionNumber: "5", title: "שאלה 5 — שלוש החוויות הגרועות ביותר" },
+  "3": { questionNumber: "2", title: "שאלה 2 — מרוצים ברמה כלשהי מול לא מרוצים כלל" },
+  "4": { questionNumber: "2", title: "שאלה 2 — מרוצים מאוד מול לא מרוצים ברמה כלשהי" },
+  "5": { questionNumber: "3", title: "שאלה 3 — איך מגיעים" },
+  "6": { questionNumber: "3", title: "שאלה 3 — % לא מרוצים לפי אמצעי הגעה" },
+  "7": { questionNumber: "4", title: "שאלה 4 — עלות חודשית ממוצעת" },
+  "8": { questionNumber: "4", title: "שאלה 4 — עלות חודשית חציונית" },
+  "9": { questionNumber: "4", title: "שאלה 4 — זמן הגעה חציוני" },
+  "10": { questionNumber: "4", title: "שאלה 4 — % לא מרוצים לפי רבעון זמן" },
+  "11": { questionNumber: "4", title: "שאלה 4 — זמן מול עלות" },
+  "12": { questionNumber: "5", title: "שאלה 5 — שלוש החוויות הגרועות ביותר" },
 };
 
 export function PresentationPage() {
@@ -78,7 +79,13 @@ export function PresentationPage() {
   }
 
   return (
-    <PresentationLayout title={meta.title} lastUpdated={lastUpdated} onRefresh={load} dark={vizId === "11"}>
+    <PresentationLayout
+      title={meta.title}
+      lastUpdated={lastUpdated}
+      onRefresh={load}
+      dark={vizId === "12"}
+      respondentCount={table?.rows.length ?? null}
+    >
       {!table ? (
         <p className="text-slate-400">{t.common.loading}</p>
       ) : (
@@ -132,7 +139,7 @@ function VizBody({
       );
     case "6":
       return hasData ? (
-        <BigNumberCard value={viz.viz6(table)} suffix="₪" decimals={0} />
+        <BarChartCard data={viz.viz6(table)} valueSuffix="%" />
       ) : (
         <Empty label={noDataLabel} />
       );
@@ -144,24 +151,30 @@ function VizBody({
       );
     case "8":
       return hasData ? (
-        <BigNumberCard value={viz.viz8(table)} suffix="דקות" decimals={0} />
+        <BigNumberCard value={viz.viz8(table)} suffix="₪" decimals={0} />
       ) : (
         <Empty label={noDataLabel} />
       );
     case "9":
       return hasData ? (
-        <BarChartCard data={viz.viz9(table)} valueSuffix="%" />
+        <BigNumberCard value={viz.viz9(table)} suffix="דקות" decimals={0} />
       ) : (
         <Empty label={noDataLabel} />
       );
     case "10":
       return hasData ? (
-        <ScatterChartCard groups={viz.viz10(table)} xLabel="זמן הגעה (דקות)" yLabel="עלות חודשית (₪)" />
+        <BarChartCard data={viz.viz10(table)} valueSuffix="%" />
       ) : (
         <Empty label={noDataLabel} />
       );
     case "11":
-      return <WorstExperiencesCard texts={viz.viz11(table)} noDataLabel={noDataLabel} />;
+      return hasData ? (
+        <ScatterChartCard groups={viz.viz11(table)} xLabel="זמן הגעה (דקות)" yLabel="עלות חודשית (₪)" />
+      ) : (
+        <Empty label={noDataLabel} />
+      );
+    case "12":
+      return <WorstExperiencesCard texts={viz.viz12(table)} noDataLabel={noDataLabel} />;
     default:
       return null;
   }
