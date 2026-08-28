@@ -1,5 +1,9 @@
 # ShowOff
 
+**Starting a new session? Read [`docs/HANDOFF.md`](./docs/HANDOFF.md)
+first** — current live state, env vars, gotchas, and what's pending,
+in one place.
+
 ShowOff's student join layer, plus Phase 2's live question orchestration
 and presentation visualizations. See, in order, the spec and the
 architecture updates that superseded parts of it:
