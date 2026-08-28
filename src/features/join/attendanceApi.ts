@@ -4,7 +4,6 @@ import type { PublicSessionInfo } from "@/domain/types";
 export interface AttendanceSubmitResult {
   success: boolean;
   alreadyRecorded: boolean;
-  continueUrl: string;
 }
 
 export type AttendanceSubmitError =

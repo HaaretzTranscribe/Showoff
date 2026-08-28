@@ -14,6 +14,10 @@ export const languageLabel: Record<Language, string> = {
 
 export interface Dictionary {
   languageName: string;
+  live: {
+    waitingTitle: string;
+    waitingBody: string;
+  };
   join: {
     loading: string;
     notFoundTitle: string;
@@ -53,8 +57,6 @@ export interface Dictionary {
     sessionTitlePlaceholder: string;
     sessionDateLabel: string;
     attendanceCodeLabel: string;
-    pollsliveUrlLabel: string;
-    pollsliveUrlPlaceholder: string;
     createSession: string;
     status: string;
     statusDraft: string;
@@ -87,6 +89,10 @@ export interface Dictionary {
 
 const en: Dictionary = {
   languageName: "English",
+  live: {
+    waitingTitle: "Waiting for the next question…",
+    waitingBody: "Keep this page open — it will update automatically.",
+  },
   join: {
     loading: "Loading…",
     notFoundTitle: "Session not found",
@@ -126,8 +132,6 @@ const en: Dictionary = {
     sessionTitlePlaceholder: "e.g. Lecture 3",
     sessionDateLabel: "Session date",
     attendanceCodeLabel: "Attendance code",
-    pollsliveUrlLabel: "PollsLive join URL",
-    pollsliveUrlPlaceholder: "https://pollslive.com/...",
     createSession: "Create session",
     status: "Status",
     statusDraft: "Draft",
@@ -160,6 +164,10 @@ const en: Dictionary = {
 
 const he: Dictionary = {
   languageName: "עברית",
+  live: {
+    waitingTitle: "ממתינים לשאלה הבאה…",
+    waitingBody: "השאירו את הדף פתוח — הוא יתעדכן אוטומטית.",
+  },
   join: {
     loading: "טוען…",
     notFoundTitle: "המפגש לא נמצא",
@@ -199,8 +207,6 @@ const he: Dictionary = {
     sessionTitlePlaceholder: "לדוגמה: הרצאה 3",
     sessionDateLabel: "תאריך המפגש",
     attendanceCodeLabel: "קוד נוכחות",
-    pollsliveUrlLabel: "קישור הצטרפות ל-PollsLive",
-    pollsliveUrlPlaceholder: "https://pollslive.com/...",
     createSession: "יצירת מפגש",
     status: "סטטוס",
     statusDraft: "טיוטה",

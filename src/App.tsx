@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { isSupabaseConfigured } from "@/lib/supabaseClient";
 import { JoinPage } from "@/features/join/JoinPage";
+import { LiveSessionPage } from "@/features/live/LiveSessionPage";
 import { StudioLayout } from "@/features/studio/StudioLayout";
 import { CoursesPage } from "@/features/studio/CoursesPage";
 import { SessionsPage } from "@/features/studio/SessionsPage";
@@ -28,6 +29,7 @@ export function App() {
     <Routes>
       <Route path="/" element={<Navigate to="/studio" replace />} />
       <Route path="/join/:sessionSlug" element={<JoinPage />} />
+      <Route path="/live/:sessionSlug" element={<LiveSessionPage />} />
       <Route path="/studio" element={<StudioLayout />}>
         <Route index element={<CoursesPage />} />
         <Route path="courses/:courseId" element={<SessionsPage />} />

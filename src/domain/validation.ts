@@ -50,17 +50,11 @@ export const courseNameSchema = z.string().trim().min(1).max(200);
 
 export const sessionTitleSchema = z.string().trim().min(1).max(200);
 
-export const pollsliveJoinUrlSchema = z
-  .string()
-  .trim()
-  .url("invalid_url");
-
 export const createSessionSchema = z.object({
   courseId: z.string().uuid(),
   title: sessionTitleSchema,
   sessionDate: z.string().min(1),
   attendanceCode: attendanceCodeSchema,
-  pollsliveJoinUrl: pollsliveJoinUrlSchema,
 });
 
 export type AttendanceSubmitInput = z.infer<typeof attendanceSubmitSchema>;

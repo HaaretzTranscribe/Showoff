@@ -21,7 +21,6 @@ interface SessionRow {
   session_date: string;
   session_slug: string;
   attendance_code: string;
-  pollslive_join_url: string;
   status: SessionStatus;
   created_at: string;
   updated_at: string;
@@ -35,7 +34,6 @@ function mapSession(row: SessionRow): ClassSession {
     sessionDate: row.session_date,
     sessionSlug: row.session_slug,
     attendanceCode: row.attendance_code,
-    pollsliveJoinUrl: row.pollslive_join_url,
     status: row.status,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -117,7 +115,6 @@ export async function createSession(input: {
   title: string;
   sessionDate: string;
   attendanceCode: string;
-  pollsliveJoinUrl: string;
 }): Promise<ClassSession> {
   const maxAttempts = 5;
   let lastError: unknown = null;
@@ -132,7 +129,6 @@ export async function createSession(input: {
         session_date: input.sessionDate,
         session_slug: sessionSlug,
         attendance_code: input.attendanceCode,
-        pollslive_join_url: input.pollsliveJoinUrl,
       })
       .select("*")
       .single();

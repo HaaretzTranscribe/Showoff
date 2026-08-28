@@ -14,7 +14,6 @@ export function SessionsPage() {
   const [title, setTitle] = useState("");
   const [sessionDate, setSessionDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [attendanceCode, setAttendanceCode] = useState(() => randomAttendanceCode());
-  const [pollsliveJoinUrl, setPollsliveJoinUrl] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
 
@@ -36,12 +35,10 @@ export function SessionsPage() {
         title: title.trim(),
         sessionDate,
         attendanceCode,
-        pollsliveJoinUrl: pollsliveJoinUrl.trim(),
       });
       setSessions((prev) => [session, ...(prev ?? [])]);
       setTitle("");
       setAttendanceCode(randomAttendanceCode());
-      setPollsliveJoinUrl("");
     } catch (err) {
       setError(errorMessage(err));
     } finally {
@@ -90,17 +87,6 @@ export function SessionsPage() {
             value={attendanceCode}
             onChange={(e) => setAttendanceCode(e.target.value.toUpperCase())}
             className="border border-gray-300 rounded-lg px-3 py-2 tracking-widest"
-          />
-        </label>
-        <label className="flex flex-col gap-1">
-          <span className="text-sm font-medium">{t.studio.pollsliveUrlLabel}</span>
-          <input
-            required
-            type="url"
-            value={pollsliveJoinUrl}
-            onChange={(e) => setPollsliveJoinUrl(e.target.value)}
-            placeholder={t.studio.pollsliveUrlPlaceholder}
-            className="border border-gray-300 rounded-lg px-3 py-2"
           />
         </label>
         {error && <p className="text-red-600 text-sm">{error}</p>}

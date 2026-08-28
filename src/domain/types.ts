@@ -16,7 +16,6 @@ export interface ClassSession {
   sessionDate: string;
   sessionSlug: string;
   attendanceCode: string;
-  pollsliveJoinUrl: string;
   status: SessionStatus;
   createdAt: string;
   updatedAt: string;

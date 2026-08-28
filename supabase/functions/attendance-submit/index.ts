@@ -9,6 +9,12 @@
 // Students never sign in (spec: "students do not need accounts") — no
 // Authorization header is required or checked here.
 //
+// No external redirect: the response only confirms success. The
+// client already has the session_slug it POSTed and navigates to
+// /live/:sessionSlug itself — this function has nothing to add there
+// and must never gain a field that maps a name to a future response
+// record (see the comment in 0001_init_schema.sql).
+//
 // Deliberately self-contained (no ../_shared imports): meant to be
 // pasted as-is into the Supabase Dashboard's Edge Function editor,
 // which may not support multi-file functions.
@@ -114,7 +120,7 @@ Deno.serve(async (req: Request) => {
 
   const { data: session, error: sessionError } = await admin
     .from("class_sessions")
-    .select("id, status, attendance_code, pollslive_join_url")
+    .select("id, status, attendance_code")
     .eq("session_slug", payload.sessionSlug)
     .maybeSingle();
 
@@ -151,11 +157,7 @@ Deno.serve(async (req: Request) => {
   }
 
   if (existing) {
-    return jsonResponse({
-      success: true,
-      alreadyRecorded: true,
-      continueUrl: session.pollslive_join_url,
-    });
+    return jsonResponse({ success: true, alreadyRecorded: true });
   }
 
   const { error: insertError } = await admin.from("attendance_records").insert({
@@ -170,9 +172,5 @@ Deno.serve(async (req: Request) => {
     return jsonResponse({ error: "server_error" }, 500);
   }
 
-  return jsonResponse({
-    success: true,
-    alreadyRecorded: false,
-    continueUrl: session.pollslive_join_url,
-  });
+  return jsonResponse({ success: true, alreadyRecorded: false });
 });

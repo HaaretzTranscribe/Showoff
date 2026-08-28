@@ -1,8 +1,15 @@
 -- ShowOff Phase 1 — Attendance & Join layer (spec section 6).
 -- Deliberately thin: courses -> class_sessions -> attendance_records,
--- with no field anywhere that maps a named attendee to a PollsLive
--- voter id (spec section 3). Do not add such a field in a later
--- migration without re-reading that section.
+-- with no field anywhere that maps a named attendee to a future
+-- anonymous response record (spec section 3). Do not add such a field
+-- in a later migration without re-reading that section.
+--
+-- Attendance no longer hands students off to an external polling
+-- provider. After submitting, students land on an in-app live-session
+-- page (routed client-side by session_slug); Phase 2 will turn that
+-- page into an embedded-Google-Forms viewer. Nothing in this schema
+-- needs to change for that — the page only needs the slug it already
+-- gets from the URL.
 
 create extension if not exists "pgcrypto";
 
@@ -32,7 +39,6 @@ create table class_sessions (
   session_date date not null,
   session_slug text not null unique,
   attendance_code text not null,
-  pollslive_join_url text not null,
   status session_status not null default 'draft',
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -54,7 +60,7 @@ create trigger class_sessions_set_updated_at
   for each row execute function set_updated_at();
 
 -- Dataset A (spec section 3): real names, instructor-read-only.
--- Structurally disconnected from any future PollsLive response table —
+-- Structurally disconnected from any future (Phase 2) response table —
 -- there is nothing here a later migration should join on except
 -- class_session_id.
 create table attendance_records (

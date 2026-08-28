@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useI18n } from "@/i18n/I18nProvider";
 import { LanguageSwitcher } from "@/i18n/LanguageSwitcher";
 import { isPlausibleName } from "@/domain/validation";
@@ -22,6 +22,7 @@ function formatDate(iso: string, lang: string): string {
 
 export function JoinPage() {
   const { sessionSlug = "" } = useParams();
+  const navigate = useNavigate();
   const { t, lang } = useI18n();
 
   const [phase, setPhase] = useState<Phase>("loading");
@@ -31,7 +32,6 @@ export function JoinPage() {
   const [fieldError, setFieldError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [alreadyRecorded, setAlreadyRecorded] = useState(false);
-  const [continueUrl, setContinueUrl] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -74,7 +74,6 @@ export function JoinPage() {
     }
 
     setAlreadyRecorded(result.data.alreadyRecorded);
-    setContinueUrl(result.data.continueUrl);
     setPhase("confirmed");
   }
 
@@ -101,7 +100,7 @@ export function JoinPage() {
   }
 
   function handleContinue() {
-    if (continueUrl) window.location.href = continueUrl;
+    navigate(`/live/${sessionSlug}`, { replace: true });
   }
 
   return (
