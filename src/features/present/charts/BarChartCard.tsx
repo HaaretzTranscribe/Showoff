@@ -46,7 +46,7 @@ export function BarChartCard({
   height?: number;
 }) {
   return (
-    <ResponsiveContainer width="100%" height={height} className="animate-fade-in">
+    <ResponsiveContainer width="100%" height={height} className="chart-bars-animated">
       <BarChart data={data} margin={{ top: 32, right: 24, bottom: 8, left: 8 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="#dbeafe" vertical={false} />
         <XAxis

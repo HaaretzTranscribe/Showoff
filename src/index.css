@@ -36,3 +36,27 @@ html[dir="rtl"] {
 .animate-fade-in {
   animation: fade-in 0.4s ease-out both;
 }
+
+/*
+ * Bars growing upward on the presentation charts, done in pure CSS
+ * rather than Recharts' own animation — Recharts' JS-driven bar
+ * animation was found to get stuck in an inactive state against
+ * sparse real data (rendered neither the bar nor its value label; see
+ * docs/phase_2_addendum_visualizations.md). Scaling each bar's own
+ * group element from its own bottom edge is reliable regardless of
+ * data size and doesn't depend on Recharts' internal animation state.
+ */
+@keyframes bar-grow-up {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+.chart-bars-animated .recharts-bar-rectangle path {
+  transform-box: fill-box;
+  transform-origin: bottom;
+  animation: bar-grow-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}

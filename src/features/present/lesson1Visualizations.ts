@@ -32,9 +32,14 @@ function countBy(rows: string[][], col: number): Map<string, number> {
   return counts;
 }
 
-function toBarData(counts: Map<string, number>, order?: string[]): BarDatum[] {
+/** Converts counts to % of the total (rounded), rather than nominal counts — vizzes 1-5 are all normalized so bars are comparable regardless of how many students have responded so far. */
+function toPercentBarData(counts: Map<string, number>, order?: string[]): BarDatum[] {
+  const total = Array.from(counts.values()).reduce((sum, v) => sum + v, 0);
   const labels = order ?? Array.from(counts.keys());
-  return labels.map((label) => ({ label, value: counts.get(label) ?? 0 }));
+  return labels.map((label) => {
+    const value = counts.get(label) ?? 0;
+    return { label, value: total > 0 ? Math.round((value / total) * 100) : 0 };
+  });
 }
 
 function median(values: number[]): number {
@@ -49,30 +54,31 @@ function mean(values: number[]): number {
   return values.reduce((sum, v) => sum + v, 0) / values.length;
 }
 
-/** Viz 1 — bar chart, Q1's Yes/No counts. */
+/** Viz 1 — bar chart, Q1's Yes/No as % of respondents. */
 export function viz1(table: ResponseTable): BarDatum[] {
-  return toBarData(countBy(table.rows, COL.q1.satisfaction));
+  return toPercentBarData(countBy(table.rows, COL.q1.satisfaction));
 }
 
-/** Viz 2 — bar chart, Q2's 4-point satisfaction scale, raw. */
+/** Viz 2 — bar chart, Q2's 4-point satisfaction scale as % of respondents. */
 export function viz2(table: ResponseTable): BarDatum[] {
-  return toBarData(countBy(table.rows, COL.q2.satisfaction), [...POSITIVE, ...NEGATIVE]);
+  return toPercentBarData(countBy(table.rows, COL.q2.satisfaction), [...POSITIVE, ...NEGATIVE]);
 }
 
-/** Viz 3 — same Q2 data, collapsed to positive vs negative. */
+/** Viz 3 — same Q2 data, collapsed to positive vs negative, as % of respondents. */
 export function viz3(table: ResponseTable): BarDatum[] {
   const counts = countBy(table.rows, COL.q2.satisfaction);
   const positive = POSITIVE.reduce((sum, k) => sum + (counts.get(k) ?? 0), 0);
   const negative = NEGATIVE.reduce((sum, k) => sum + (counts.get(k) ?? 0), 0);
+  const total = positive + negative;
   return [
-    { label: "חיובי", value: positive, color: BLUE },
-    { label: "שלילי", value: negative, color: RED },
+    { label: "חיובי", value: total > 0 ? Math.round((positive / total) * 100) : 0, color: BLUE },
+    { label: "שלילי", value: total > 0 ? Math.round((negative / total) * 100) : 0, color: RED },
   ];
 }
 
-/** Viz 4 — bar chart, Q3's transportation method counts. */
+/** Viz 4 — bar chart, Q3's transportation method as % of respondents. */
 export function viz4(table: ResponseTable): BarDatum[] {
-  return toBarData(countBy(table.rows, COL.q3.method));
+  return toPercentBarData(countBy(table.rows, COL.q3.method));
 }
 
 /** Viz 5 — % dissatisfied per transportation method, from Q3. */
@@ -136,25 +142,45 @@ export function viz9(table: ResponseTable): BarDatum[] {
   const sorted = [...rows].sort((a, b) => a.time - b.time);
   const quartileCount = 4;
   const size = Math.ceil(sorted.length / quartileCount);
-  const labels = ["רבעון 1 (הכי מהיר)", "רבעון 2", "רבעון 3", "רבעון 4 (הכי איטי)"];
 
   const buckets: BarDatum[] = [];
   for (let i = 0; i < quartileCount; i++) {
     const slice = sorted.slice(i * size, (i + 1) * size);
     if (slice.length === 0) continue;
     const negative = slice.filter((r) => NEGATIVE.includes(r.satisfaction)).length;
-    buckets.push({ label: labels[i], value: Math.round((negative / slice.length) * 100) });
+    const times = slice.map((r) => r.time);
+    const rangeLabel =
+      Math.min(...times) === Math.max(...times)
+        ? `${Math.min(...times)} דקות`
+        : `${Math.min(...times)}-${Math.max(...times)} דקות`;
+    buckets.push({
+      label: `רבעון ${i + 1} (${rangeLabel})`,
+      value: Math.round((negative / slice.length) * 100),
+    });
   }
   return buckets;
 }
 
-/** Viz 10 — scatter, time vs cost, colored by satisfaction (blue/purple/red), from Q4. */
+/**
+ * Viz 10 — scatter, time vs cost, colored by satisfaction (blue/purple/red), from Q4.
+ * Excludes the single highest-time and single lowest-time response (outliers
+ * on the time axis specifically, since time is the axis emphasized across
+ * vizzes 8/9 too) — per instructor request, "should not include the highest
+ * and lowest number." If cost outliers should be excluded too/instead,
+ * that needs a follow-up spec.
+ */
 export function viz10(table: ResponseTable): ScatterGroup[] {
-  const rows = costTimeRows(table).filter((r) => r.time !== null && r.cost !== null) as {
+  const allRows = costTimeRows(table).filter((r) => r.time !== null && r.cost !== null) as {
     satisfaction: string;
     time: number;
     cost: number;
   }[];
+
+  const times = allRows.map((r) => r.time);
+  const minTime = Math.min(...times);
+  const maxTime = Math.max(...times);
+  const rows =
+    allRows.length > 2 ? allRows.filter((r) => r.time !== minTime && r.time !== maxTime) : allRows;
 
   const groups: Record<"pleased" | "mixed" | "unpleased", ScatterGroup> = {
     pleased: { name: "מרוצה מאוד", color: BLUE, points: [] },
@@ -172,6 +198,11 @@ export function viz10(table: ResponseTable): ScatterGroup[] {
   return [groups.pleased, groups.mixed, groups.unpleased].filter((g) => g.points.length > 0);
 }
 
+/** Strips one trailing "." (only) — keeps "?"/"!" as-is, just tidies a plain full stop for display. */
+function stripTrailingPeriod(text: string): string {
+  return text.endsWith(".") ? text.slice(0, -1) : text;
+}
+
 /** Viz 11 — the 3 most recent "very dissatisfied" free-text experiences from Q5. */
 export function viz11(table: ResponseTable): string[] {
   // Rows are in submission order; take from the end (most recent) first.
@@ -183,7 +214,7 @@ export function viz11(table: ResponseTable): string[] {
       if (excluding.has(i)) return;
       const satisfaction = (row[COL.q5.satisfaction] ?? "").trim();
       const experience = (row[COL.q5.experience] ?? "").trim();
-      if (satisfaction === satisfactionValue && experience) out.push(experience);
+      if (satisfaction === satisfactionValue && experience) out.push(stripTrailingPeriod(experience));
     });
     return out;
   }

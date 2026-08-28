@@ -8,7 +8,7 @@ export function WorstExperiencesCard({ texts, noDataLabel }: { texts: string[]; 
         texts.map((text, i) => (
           <p
             key={i}
-            className="animate-fade-in-up text-center text-3xl font-bold leading-snug text-red-500 sm:text-4xl"
+            className="animate-fade-in-up text-center text-5xl font-extrabold leading-snug text-red-500 sm:text-6xl lg:text-7xl"
             style={{ animationDelay: `${i * 150}ms` }}
           >
             "{text}"

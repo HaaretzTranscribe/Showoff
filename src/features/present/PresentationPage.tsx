@@ -101,13 +101,29 @@ function VizBody({
 
   switch (vizId) {
     case "1":
-      return hasData ? <BarChartCard data={viz.viz1(table)} /> : <Empty label={noDataLabel} />;
+      return hasData ? (
+        <BarChartCard data={viz.viz1(table)} valueSuffix="%" />
+      ) : (
+        <Empty label={noDataLabel} />
+      );
     case "2":
-      return hasData ? <BarChartCard data={viz.viz2(table)} /> : <Empty label={noDataLabel} />;
+      return hasData ? (
+        <BarChartCard data={viz.viz2(table)} valueSuffix="%" />
+      ) : (
+        <Empty label={noDataLabel} />
+      );
     case "3":
-      return hasData ? <BarChartCard data={viz.viz3(table)} /> : <Empty label={noDataLabel} />;
+      return hasData ? (
+        <BarChartCard data={viz.viz3(table)} valueSuffix="%" />
+      ) : (
+        <Empty label={noDataLabel} />
+      );
     case "4":
-      return hasData ? <BarChartCard data={viz.viz4(table)} /> : <Empty label={noDataLabel} />;
+      return hasData ? (
+        <BarChartCard data={viz.viz4(table)} valueSuffix="%" />
+      ) : (
+        <Empty label={noDataLabel} />
+      );
     case "5":
       return hasData ? (
         <BarChartCard data={viz.viz5(table)} valueSuffix="%" />

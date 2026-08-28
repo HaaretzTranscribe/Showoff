@@ -20,12 +20,11 @@ export function PresentationLayout({
   return (
     <div className={`flex h-screen flex-col ${dark ? "bg-black text-white" : "bg-white text-slate-900"}`}>
       <div
-        className={`flex items-center justify-between border-b p-4 ${
+        className={`flex items-center justify-between border-b p-3 ${
           dark ? "border-white/10" : "border-blue-100"
         }`}
       >
         <div className="flex items-center gap-3">
-          <h1 className={`font-semibold ${dark ? "text-white" : "text-blue-900"}`}>{title}</h1>
           {lastUpdated && (
             <span className={`text-xs ${dark ? "text-white/40" : "text-slate-400"}`}>
               {lastUpdated.toLocaleTimeString(lang === "he" ? "he-IL" : "en-US")}
@@ -45,7 +44,16 @@ export function PresentationLayout({
         </div>
         <LanguageSwitcher />
       </div>
-      <div className="flex flex-1 flex-col overflow-auto px-6 py-6">{children}</div>
+      <div className="flex flex-1 flex-col overflow-auto px-6 py-6">
+        <h1
+          className={`animate-fade-in-up mb-4 text-center text-4xl font-extrabold sm:text-5xl ${
+            dark ? "text-white" : "text-blue-900"
+          }`}
+        >
+          {title}
+        </h1>
+        <div className="flex flex-1 flex-col">{children}</div>
+      </div>
     </div>
   );
 }
