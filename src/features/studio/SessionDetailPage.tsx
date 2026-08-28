@@ -2,17 +2,8 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useI18n } from "@/i18n/I18nProvider";
 import { errorMessage } from "@/lib/errorMessage";
-import type { AttendanceRecord, ClassSession, SessionStatus } from "@/domain/types";
-import {
-  addManualAttendee,
-  attendanceToCsv,
-  downloadCsv,
-  getSession,
-  listAttendance,
-  removeAttendanceRecord,
-  updateAttendanceCode,
-  updateSessionStatus,
-} from "./api";
+import type { ClassSession, SessionStatus } from "@/domain/types";
+import { getSession, updateAttendanceCode, updateGoogleFormUrl, updateSessionStatus } from "./api";
 import { StatusBadge } from "./SessionsPage";
 
 export function SessionDetailPage() {
@@ -20,12 +11,12 @@ export function SessionDetailPage() {
   const { t } = useI18n();
 
   const [session, setSession] = useState<ClassSession | null>(null);
-  const [attendance, setAttendance] = useState<AttendanceRecord[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const [editingCode, setEditingCode] = useState(false);
   const [codeDraft, setCodeDraft] = useState("");
-  const [manualName, setManualName] = useState("");
+  const [editingFormUrl, setEditingFormUrl] = useState(false);
+  const [formUrlDraft, setFormUrlDraft] = useState("");
   const [copyLabel, setCopyLabel] = useState<string | null>(null);
 
   useEffect(() => {
@@ -34,10 +25,12 @@ export function SessionDetailPage() {
 
   async function refresh() {
     try {
-      const [s, records] = await Promise.all([getSession(sessionId), listAttendance(sessionId)]);
+      const s = await getSession(sessionId);
       setSession(s);
-      setAttendance(records);
-      if (s) setCodeDraft(s.attendanceCode);
+      if (s) {
+        setCodeDraft(s.attendanceCode);
+        setFormUrlDraft(s.googleFormUrl ?? "");
+      }
     } catch (err) {
       setError(errorMessage(err));
     }
@@ -67,32 +60,17 @@ export function SessionDetailPage() {
     }
   }
 
-  async function handleAddManual(e: FormEvent) {
+  async function handleSaveFormUrl(e: FormEvent) {
     e.preventDefault();
-    if (!manualName.trim()) return;
+    if (!session || !formUrlDraft.trim()) return;
     setError(null);
     try {
-      const record = await addManualAttendee(sessionId, manualName.trim());
-      setAttendance((prev) => [...(prev ?? []), record]);
-      setManualName("");
+      const updated = await updateGoogleFormUrl(session.id, formUrlDraft.trim());
+      setSession(updated);
+      setEditingFormUrl(false);
     } catch (err) {
       setError(errorMessage(err));
     }
-  }
-
-  async function handleRemove(recordId: string) {
-    setError(null);
-    try {
-      await removeAttendanceRecord(recordId);
-      setAttendance((prev) => (prev ?? []).filter((r) => r.id !== recordId));
-    } catch (err) {
-      setError(errorMessage(err));
-    }
-  }
-
-  function handleExport() {
-    if (!attendance || !session) return;
-    downloadCsv(`attendance-${session.sessionSlug}.csv`, attendanceToCsv(attendance));
   }
 
   async function handleCopyJoinUrl() {
@@ -186,6 +164,47 @@ export function SessionDetailPage() {
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-sm font-medium">{t.studio.googleFormUrlLabel}:</span>
+          {editingFormUrl ? (
+            <form onSubmit={handleSaveFormUrl} className="flex items-center gap-2 flex-1 min-w-0">
+              <input
+                autoFocus
+                type="url"
+                value={formUrlDraft}
+                onChange={(e) => setFormUrlDraft(e.target.value)}
+                className="border border-gray-300 rounded-lg px-2 py-1 flex-1 min-w-0"
+              />
+              <button type="submit" className="text-sm bg-gray-900 text-white rounded-lg px-3 py-1.5">
+                {t.studio.save}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingFormUrl(false);
+                  setFormUrlDraft(session.googleFormUrl ?? "");
+                }}
+                className="text-sm text-gray-500"
+              >
+                {t.studio.cancel}
+              </button>
+            </form>
+          ) : (
+            <>
+              <code className="text-xs bg-gray-100 rounded px-2 py-1 break-all">
+                {session.googleFormUrl ?? t.studio.googleFormUrlMissing}
+              </code>
+              <button
+                type="button"
+                onClick={() => setEditingFormUrl(true)}
+                className="text-sm text-gray-500 hover:text-gray-800"
+              >
+                {t.studio.changeFormUrl}
+              </button>
+            </>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2 flex-wrap">
           <span className="text-sm font-medium">{t.studio.joinUrlLabel}:</span>
           <code className="text-xs bg-gray-100 rounded px-2 py-1 break-all">{joinUrl}</code>
           <button
@@ -198,54 +217,7 @@ export function SessionDetailPage() {
         </div>
       </div>
 
-      <div className="border border-gray-200 rounded-lg p-4 bg-white flex flex-col gap-4">
-        <div className="flex items-center justify-between">
-          <h2 className="font-semibold">
-            {t.studio.attendanceListTitle} ({attendance?.length ?? 0} {t.studio.attendeeCount})
-          </h2>
-          <button
-            type="button"
-            onClick={handleExport}
-            disabled={!attendance || attendance.length === 0}
-            className="text-sm bg-gray-100 rounded-lg px-3 py-1.5 disabled:opacity-50"
-          >
-            {t.studio.exportCsv}
-          </button>
-        </div>
-
-        <form onSubmit={handleAddManual} className="flex gap-2">
-          <input
-            value={manualName}
-            onChange={(e) => setManualName(e.target.value)}
-            placeholder={t.studio.addAttendeePlaceholder}
-            className="flex-1 border border-gray-300 rounded-lg px-3 py-2"
-          />
-          <button type="submit" className="bg-gray-900 text-white rounded-lg px-4 py-2 font-medium">
-            {t.studio.add}
-          </button>
-        </form>
-
-        {attendance === null ? (
-          <p className="text-gray-500">{t.common.loading}</p>
-        ) : attendance.length === 0 ? (
-          <p className="text-gray-500">{t.studio.noAttendees}</p>
-        ) : (
-          <ul className="flex flex-col divide-y divide-gray-100">
-            {attendance.map((record) => (
-              <li key={record.id} className="flex items-center justify-between py-2">
-                <span>{record.fullName}</span>
-                <button
-                  type="button"
-                  onClick={() => handleRemove(record.id)}
-                  className="text-sm text-red-600 hover:underline"
-                >
-                  {t.studio.remove}
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+      <p className="text-sm text-gray-500">{t.studio.rollCallNote}</p>
     </div>
   );
 }

@@ -26,19 +26,10 @@ export interface Dictionary {
     notOpenBody: string;
     closedTitle: string;
     closedBody: string;
-    fullNameLabel: string;
-    fullNamePlaceholder: string;
-    attendanceCodeLabel: string;
-    attendanceCodePlaceholder: string;
-    submit: string;
-    submitting: string;
-    confirmedTitle: string;
-    alreadyRecordedTitle: string;
+    codeLabel: string;
+    formInstructions: string;
+    formMissing: string;
     continueButton: string;
-    errorInvalidCode: string;
-    errorNameTooShort: string;
-    errorGeneric: string;
-    errorNetwork: string;
   };
   studio: {
     signInTitle: string;
@@ -57,6 +48,10 @@ export interface Dictionary {
     sessionTitlePlaceholder: string;
     sessionDateLabel: string;
     attendanceCodeLabel: string;
+    googleFormUrlLabel: string;
+    googleFormUrlPlaceholder: string;
+    googleFormUrlMissing: string;
+    changeFormUrl: string;
     createSession: string;
     status: string;
     statusDraft: string;
@@ -67,18 +62,11 @@ export interface Dictionary {
     changeCode: string;
     save: string;
     cancel: string;
-    attendeeCount: string;
-    attendanceListTitle: string;
-    exportCsv: string;
-    addAttendee: string;
-    addAttendeePlaceholder: string;
-    add: string;
-    remove: string;
     joinUrlLabel: string;
     copyJoinUrl: string;
     copied: string;
-    noAttendees: string;
     noSessions: string;
+    rollCallNote: string;
   };
   common: {
     loading: string;
@@ -101,19 +89,10 @@ const en: Dictionary = {
     notOpenBody: "Ask your instructor to open attendance.",
     closedTitle: "Attendance is closed",
     closedBody: "This session's attendance window has ended.",
-    fullNameLabel: "Full name",
-    fullNamePlaceholder: "Your full name",
-    attendanceCodeLabel: "Attendance code",
-    attendanceCodePlaceholder: "Code",
-    submit: "Enter class",
-    submitting: "Submitting…",
-    confirmedTitle: "Attendance recorded ✓",
-    alreadyRecordedTitle: "Attendance already recorded",
+    codeLabel: "Today's code",
+    formInstructions: "Enter your name and the code above in the form below.",
+    formMissing: "No roll-call form has been set up for this session yet.",
     continueButton: "Continue to class",
-    errorInvalidCode: "Wrong attendance code",
-    errorNameTooShort: "Please enter your full name",
-    errorGeneric: "Something went wrong. Please try again.",
-    errorNetwork: "Network error. Please check your connection and try again.",
   },
   studio: {
     signInTitle: "Instructor sign in",
@@ -132,6 +111,10 @@ const en: Dictionary = {
     sessionTitlePlaceholder: "e.g. Lecture 3",
     sessionDateLabel: "Session date",
     attendanceCodeLabel: "Attendance code",
+    googleFormUrlLabel: "Roll-call Google Form URL",
+    googleFormUrlPlaceholder: "https://docs.google.com/forms/d/e/.../viewform",
+    googleFormUrlMissing: "Not set",
+    changeFormUrl: "Change",
     createSession: "Create session",
     status: "Status",
     statusDraft: "Draft",
@@ -142,18 +125,12 @@ const en: Dictionary = {
     changeCode: "Change code",
     save: "Save",
     cancel: "Cancel",
-    attendeeCount: "attendees",
-    attendanceListTitle: "Attendance",
-    exportCsv: "Export CSV",
-    addAttendee: "Add attendee",
-    addAttendeePlaceholder: "Full name",
-    add: "Add",
-    remove: "Remove",
     joinUrlLabel: "Student join link",
     copyJoinUrl: "Copy link",
     copied: "Copied",
-    noAttendees: "No attendance recorded yet.",
     noSessions: "No sessions yet.",
+    rollCallNote:
+      "Attendance is recorded in this Form's linked Google Sheet, not in ShowOff — check there for who attended.",
   },
   common: {
     loading: "Loading…",
@@ -176,19 +153,10 @@ const he: Dictionary = {
     notOpenBody: "בקשו מהמרצה לפתוח את הנוכחות.",
     closedTitle: "הנוכחות נסגרה",
     closedBody: "חלון הנוכחות למפגש הזה הסתיים.",
-    fullNameLabel: "שם מלא",
-    fullNamePlaceholder: "השם המלא שלך",
-    attendanceCodeLabel: "קוד נוכחות",
-    attendanceCodePlaceholder: "קוד",
-    submit: "כניסה לשיעור",
-    submitting: "שולח…",
-    confirmedTitle: "הנוכחות נרשמה ✓",
-    alreadyRecordedTitle: "הנוכחות כבר נרשמה",
+    codeLabel: "הקוד של היום",
+    formInstructions: "הזינו את שמכם ואת הקוד שלמעלה בטופס שמופיע למטה.",
+    formMissing: "עדיין לא הוגדר טופס נוכחות למפגש הזה.",
     continueButton: "המשך לשיעור",
-    errorInvalidCode: "קוד נוכחות שגוי",
-    errorNameTooShort: "נא להזין שם מלא",
-    errorGeneric: "משהו השתבש. נסו שוב.",
-    errorNetwork: "שגיאת רשת. בדקו את החיבור ונסו שוב.",
   },
   studio: {
     signInTitle: "כניסת מרצה",
@@ -207,6 +175,10 @@ const he: Dictionary = {
     sessionTitlePlaceholder: "לדוגמה: הרצאה 3",
     sessionDateLabel: "תאריך המפגש",
     attendanceCodeLabel: "קוד נוכחות",
+    googleFormUrlLabel: "קישור לטופס הנוכחות ב-Google",
+    googleFormUrlPlaceholder: "https://docs.google.com/forms/d/e/.../viewform",
+    googleFormUrlMissing: "לא הוגדר",
+    changeFormUrl: "שינוי",
     createSession: "יצירת מפגש",
     status: "סטטוס",
     statusDraft: "טיוטה",
@@ -217,18 +189,11 @@ const he: Dictionary = {
     changeCode: "שינוי קוד",
     save: "שמירה",
     cancel: "ביטול",
-    attendeeCount: "נוכחים",
-    attendanceListTitle: "נוכחות",
-    exportCsv: "ייצוא CSV",
-    addAttendee: "הוספת נוכח",
-    addAttendeePlaceholder: "שם מלא",
-    add: "הוספה",
-    remove: "הסרה",
     joinUrlLabel: "קישור הצטרפות לסטודנטים",
     copyJoinUrl: "העתקת קישור",
     copied: "הועתק",
-    noAttendees: "עדיין לא נרשמה נוכחות.",
     noSessions: "אין עדיין מפגשים.",
+    rollCallNote: "הנוכחות נשמרת בגיליון ה-Google Sheets המקושר לטופס, ולא ב-ShowOff — שם תוכלו לבדוק מי הגיע.",
   },
   common: {
     loading: "טוען…",

@@ -1,67 +1,48 @@
 import { describe, expect, it } from "vitest";
-import {
-  isPlausibleName,
-  normalizeAttendanceCode,
-  normalizeName,
-  fullNameSchema,
-} from "./validation";
+import { createSessionSchema, googleFormUrlSchema, sessionSlugSchema } from "./validation";
 
-describe("normalizeName", () => {
-  it("trims leading/trailing whitespace", () => {
-    expect(normalizeName("  David Cohen  ")).toBe("david cohen");
+describe("sessionSlugSchema", () => {
+  it("accepts a lowercase, hyphenated slug", () => {
+    expect(sessionSlugSchema.safeParse("data-storytelling-2026-08-28-ab12").success).toBe(true);
   });
 
-  it("collapses repeated internal whitespace", () => {
-    expect(normalizeName("David   Cohen")).toBe("david cohen");
-  });
-
-  it("is case-insensitive", () => {
-    expect(normalizeName("DAVID COHEN")).toBe(normalizeName("david cohen"));
-  });
-
-  it("treats retyping variants as the same normalized name", () => {
-    expect(normalizeName(" David  Cohen")).toBe(normalizeName("david cohen "));
+  it("rejects uppercase or spaces", () => {
+    expect(sessionSlugSchema.safeParse("Data Storytelling").success).toBe(false);
   });
 });
 
-describe("isPlausibleName", () => {
-  it("rejects empty input", () => {
-    expect(isPlausibleName("")).toBe(false);
+describe("googleFormUrlSchema", () => {
+  it("accepts a Google Forms URL", () => {
+    expect(
+      googleFormUrlSchema.safeParse("https://docs.google.com/forms/d/e/abc123/viewform").success
+    ).toBe(true);
   });
 
-  it("rejects a single character", () => {
-    expect(isPlausibleName("D")).toBe(false);
-  });
-
-  it("rejects digit-only input", () => {
-    expect(isPlausibleName("12345")).toBe(false);
-  });
-
-  it("accepts a normal name", () => {
-    expect(isPlausibleName("David Cohen")).toBe(true);
-  });
-
-  it("accepts a Hebrew name", () => {
-    expect(isPlausibleName("דוד כהן")).toBe(true);
+  it("rejects a non-URL", () => {
+    expect(googleFormUrlSchema.safeParse("not a url").success).toBe(false);
   });
 });
 
-describe("normalizeAttendanceCode", () => {
-  it("uppercases and strips whitespace", () => {
-    expect(normalizeAttendanceCode(" ab12 ")).toBe("AB12");
-  });
-});
-
-describe("fullNameSchema", () => {
-  it("rejects too-short input", () => {
-    expect(fullNameSchema.safeParse("D").success).toBe(false);
-  });
-
-  it("rejects input with no letters", () => {
-    expect(fullNameSchema.safeParse("1234").success).toBe(false);
+describe("createSessionSchema", () => {
+  it("requires a valid Google Form URL", () => {
+    const result = createSessionSchema.safeParse({
+      courseId: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+      title: "Lecture 3",
+      sessionDate: "2026-08-28",
+      attendanceCode: "AB12",
+      googleFormUrl: "not a url",
+    });
+    expect(result.success).toBe(false);
   });
 
-  it("accepts a plausible name", () => {
-    expect(fullNameSchema.safeParse("David Cohen").success).toBe(true);
+  it("accepts a well-formed session", () => {
+    const result = createSessionSchema.safeParse({
+      courseId: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+      title: "Lecture 3",
+      sessionDate: "2026-08-28",
+      attendanceCode: "AB12",
+      googleFormUrl: "https://docs.google.com/forms/d/e/abc123/viewform",
+    });
+    expect(result.success).toBe(true);
   });
 });

@@ -1,7 +1,5 @@
 export type SessionStatus = "draft" | "open" | "closed";
 
-export type AttendanceSource = "student" | "instructor_manual";
-
 export interface Course {
   id: string;
   ownerUserId: string;
@@ -16,25 +14,26 @@ export interface ClassSession {
   sessionDate: string;
   sessionSlug: string;
   attendanceCode: string;
+  /** Embed URL for this lesson's roll-call Google Form. */
+  googleFormUrl: string | null;
   status: SessionStatus;
   createdAt: string;
   updatedAt: string;
 }
 
-export interface AttendanceRecord {
-  id: string;
-  classSessionId: string;
-  fullName: string;
-  normalizedName: string;
-  submittedAt: string;
-  source: AttendanceSource;
-}
-
-/** Public, non-sensitive info shown on the join page before a student submits. */
+/**
+ * Public, non-sensitive info shown on the join page. Includes the
+ * attendance code and Form URL — both are meant to be shown to
+ * whoever opens the join link, the same way the QR code itself is
+ * already public. ShowOff never stores who actually attended; that
+ * lives only in the Form's linked Google Sheet.
+ */
 export interface PublicSessionInfo {
   sessionSlug: string;
   title: string;
   sessionDate: string;
   status: SessionStatus;
   courseName: string;
+  attendanceCode: string;
+  googleFormUrl: string | null;
 }

@@ -1,7 +1,6 @@
 import { supabase } from "@/lib/supabaseClient";
-import { normalizeName } from "@/domain/validation";
 import { buildSessionSlug } from "@/lib/slug";
-import type { AttendanceRecord, ClassSession, Course, SessionStatus } from "@/domain/types";
+import type { ClassSession, Course, SessionStatus } from "@/domain/types";
 
 interface CourseRow {
   id: string;
@@ -21,6 +20,7 @@ interface SessionRow {
   session_date: string;
   session_slug: string;
   attendance_code: string;
+  google_form_url: string | null;
   status: SessionStatus;
   created_at: string;
   updated_at: string;
@@ -34,29 +34,10 @@ function mapSession(row: SessionRow): ClassSession {
     sessionDate: row.session_date,
     sessionSlug: row.session_slug,
     attendanceCode: row.attendance_code,
+    googleFormUrl: row.google_form_url,
     status: row.status,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
-  };
-}
-
-interface AttendanceRow {
-  id: string;
-  class_session_id: string;
-  full_name: string;
-  normalized_name: string;
-  submitted_at: string;
-  source: "student" | "instructor_manual";
-}
-
-function mapAttendance(row: AttendanceRow): AttendanceRecord {
-  return {
-    id: row.id,
-    classSessionId: row.class_session_id,
-    fullName: row.full_name,
-    normalizedName: row.normalized_name,
-    submittedAt: row.submitted_at,
-    source: row.source,
   };
 }
 
@@ -115,6 +96,7 @@ export async function createSession(input: {
   title: string;
   sessionDate: string;
   attendanceCode: string;
+  googleFormUrl: string;
 }): Promise<ClassSession> {
   const maxAttempts = 5;
   let lastError: unknown = null;
@@ -129,6 +111,7 @@ export async function createSession(input: {
         session_date: input.sessionDate,
         session_slug: sessionSlug,
         attendance_code: input.attendanceCode,
+        google_form_url: input.googleFormUrl,
       })
       .select("*")
       .single();
@@ -170,62 +153,16 @@ export async function updateAttendanceCode(
   return mapSession(data as SessionRow);
 }
 
-export async function listAttendance(classSessionId: string): Promise<AttendanceRecord[]> {
+export async function updateGoogleFormUrl(
+  sessionId: string,
+  googleFormUrl: string
+): Promise<ClassSession> {
   const { data, error } = await supabase
-    .from("attendance_records")
-    .select("*")
-    .eq("class_session_id", classSessionId)
-    .order("submitted_at", { ascending: true });
-  if (error) throw error;
-  return (data as AttendanceRow[]).map(mapAttendance);
-}
-
-export async function addManualAttendee(
-  classSessionId: string,
-  fullName: string
-): Promise<AttendanceRecord> {
-  const { data, error } = await supabase
-    .from("attendance_records")
-    .insert({
-      class_session_id: classSessionId,
-      full_name: fullName.trim(),
-      normalized_name: normalizeName(fullName),
-      source: "instructor_manual",
-    })
+    .from("class_sessions")
+    .update({ google_form_url: googleFormUrl })
+    .eq("id", sessionId)
     .select("*")
     .single();
   if (error) throw error;
-  return mapAttendance(data as AttendanceRow);
-}
-
-export async function removeAttendanceRecord(recordId: string): Promise<void> {
-  const { error } = await supabase.from("attendance_records").delete().eq("id", recordId);
-  if (error) throw error;
-}
-
-export function attendanceToCsv(records: AttendanceRecord[]): string {
-  const header = "full_name,submitted_at,source";
-  const rows = records.map((r) =>
-    [r.fullName, r.submittedAt, r.source].map(csvEscape).join(",")
-  );
-  return [header, ...rows].join("\r\n");
-}
-
-function csvEscape(value: string): string {
-  if (/[",\r\n]/.test(value)) {
-    return `"${value.replace(/"/g, '""')}"`;
-  }
-  return value;
-}
-
-export function downloadCsv(filename: string, csv: string): void {
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+  return mapSession(data as SessionRow);
 }

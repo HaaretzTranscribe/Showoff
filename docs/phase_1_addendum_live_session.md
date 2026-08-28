@@ -1,5 +1,12 @@
 # Phase 1 addendum: no PollsLive, in-app live-session page instead
 
+> **Partially superseded** by
+> [`phase_1_addendum_google_form_rollcall.md`](./phase_1_addendum_google_form_rollcall.md):
+> the "students stay in ShowOff and land on `/live/:sessionSlug`" part
+> below still holds, but this doc's assumption that ShowOff itself
+> records attendance no longer does — read the newer addendum for how
+> roll call actually works now.
+
 This supersedes section 2 ("Core Student Flow" step 5), section 3's
 PollsLive-specific wording, and any other part of
 [`ShowOff_spec_1_attendance_join.md`](./ShowOff_spec_1_attendance_join.md)

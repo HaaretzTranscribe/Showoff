@@ -14,6 +14,7 @@ export function SessionsPage() {
   const [title, setTitle] = useState("");
   const [sessionDate, setSessionDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [attendanceCode, setAttendanceCode] = useState(() => randomAttendanceCode());
+  const [googleFormUrl, setGoogleFormUrl] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
 
@@ -35,10 +36,12 @@ export function SessionsPage() {
         title: title.trim(),
         sessionDate,
         attendanceCode,
+        googleFormUrl: googleFormUrl.trim(),
       });
       setSessions((prev) => [session, ...(prev ?? [])]);
       setTitle("");
       setAttendanceCode(randomAttendanceCode());
+      setGoogleFormUrl("");
     } catch (err) {
       setError(errorMessage(err));
     } finally {
@@ -87,6 +90,17 @@ export function SessionsPage() {
             value={attendanceCode}
             onChange={(e) => setAttendanceCode(e.target.value.toUpperCase())}
             className="border border-gray-300 rounded-lg px-3 py-2 tracking-widest"
+          />
+        </label>
+        <label className="flex flex-col gap-1">
+          <span className="text-sm font-medium">{t.studio.googleFormUrlLabel}</span>
+          <input
+            required
+            type="url"
+            value={googleFormUrl}
+            onChange={(e) => setGoogleFormUrl(e.target.value)}
+            placeholder={t.studio.googleFormUrlPlaceholder}
+            className="border border-gray-300 rounded-lg px-3 py-2"
           />
         </label>
         {error && <p className="text-red-600 text-sm">{error}</p>}

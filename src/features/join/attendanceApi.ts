@@ -1,27 +1,19 @@
 import { supabase } from "@/lib/supabaseClient";
 import type { PublicSessionInfo } from "@/domain/types";
 
-export interface AttendanceSubmitResult {
-  success: boolean;
-  alreadyRecorded: boolean;
-}
-
-export type AttendanceSubmitError =
-  | "session_not_found"
-  | "session_not_open"
-  | "session_closed"
-  | "invalid_code"
-  | "rate_limited"
-  | "invalid_request"
-  | "server_error"
-  | "network_error";
-
+/**
+ * ShowOff no longer accepts an attendance write of its own — roll call
+ * happens entirely in the embedded Google Form (see JoinPage). This
+ * only reads the non-sensitive session info needed to render the join
+ * page: course/date/status, the code to display, and the Form to
+ * embed.
+ */
 export async function getPublicSessionInfo(
   sessionSlug: string
 ): Promise<PublicSessionInfo | null> {
   const { data, error } = await supabase
     .from("public_join_sessions")
-    .select("session_slug, title, session_date, status, course_name")
+    .select("session_slug, title, session_date, status, course_name, attendance_code, google_form_url")
     .eq("session_slug", sessionSlug)
     .maybeSingle();
 
@@ -33,38 +25,7 @@ export async function getPublicSessionInfo(
     sessionDate: data.session_date,
     status: data.status,
     courseName: data.course_name,
+    attendanceCode: data.attendance_code,
+    googleFormUrl: data.google_form_url,
   };
-}
-
-export async function submitAttendance(input: {
-  sessionSlug: string;
-  fullName: string;
-  attendanceCode: string;
-}): Promise<
-  { ok: true; data: AttendanceSubmitResult } | { ok: false; error: AttendanceSubmitError }
-> {
-  try {
-    const { data, error } = await supabase.functions.invoke("attendance-submit", {
-      body: input,
-    });
-
-    if (error) {
-      const context = (error as { context?: Response }).context;
-      if (context) {
-        try {
-          const body = await context.json();
-          if (typeof body?.error === "string") {
-            return { ok: false, error: body.error as AttendanceSubmitError };
-          }
-        } catch {
-          // fall through to generic server_error below
-        }
-      }
-      return { ok: false, error: "server_error" };
-    }
-
-    return { ok: true, data: data as AttendanceSubmitResult };
-  } catch {
-    return { ok: false, error: "network_error" };
-  }
 }
