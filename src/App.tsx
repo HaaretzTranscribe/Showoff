@@ -1,63 +1,39 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { isSupabaseConfigured } from "@/lib/supabaseClient";
-import { LanguagePickerPage } from "@/features/language/LanguagePickerPage";
 import { JoinPage } from "@/features/join/JoinPage";
-import { QuestionnairePage } from "@/features/join/QuestionnairePage";
-import { PresentationPage } from "@/features/presentation/PresentationPage";
 import { StudioLayout } from "@/features/studio/StudioLayout";
 import { CoursesPage } from "@/features/studio/CoursesPage";
-import { LessonsPage } from "@/features/studio/LessonsPage";
-import { QuestionsPage } from "@/features/studio/QuestionsPage";
-import { InstructorAuthGate } from "@/features/auth/InstructorAuthGate";
+import { SessionsPage } from "@/features/studio/SessionsPage";
+import { SessionDetailPage } from "@/features/studio/SessionDetailPage";
+
+function NotConfiguredScreen() {
+  return (
+    <div className="min-h-screen flex items-center justify-center text-center p-6">
+      <div>
+        <h1 className="text-xl font-bold mb-2">Supabase project not connected</h1>
+        <p className="text-gray-500">
+          Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to run ShowOff.
+        </p>
+      </div>
+    </div>
+  );
+}
 
 export function App() {
   if (!isSupabaseConfigured) {
-    return (
-      <main>
-        <h1>ShowOff</h1>
-        <p>
-          This deploy has no Supabase project connected yet. Set{" "}
-          <code>VITE_SUPABASE_URL</code> and <code>VITE_SUPABASE_ANON_KEY</code> in your
-          hosting provider's environment variables and redeploy.
-        </p>
-      </main>
-    );
+    return <NotConfiguredScreen />;
   }
 
   return (
     <Routes>
-      <Route path="/" element={<LanguagePickerPage />} />
-
-      {/* Student App */}
-      <Route path="/join" element={<JoinPage />} />
-      <Route path="/questionnaire" element={<QuestionnairePage />} />
-
-      {/* Instructor Studio */}
-      <Route
-        path="/studio"
-        element={
-          <InstructorAuthGate>
-            <StudioLayout />
-          </InstructorAuthGate>
-        }
-      >
-        <Route index element={<Navigate to="courses" replace />} />
-        <Route path="courses" element={<CoursesPage />} />
-        <Route path="courses/:courseId/lessons" element={<LessonsPage />} />
-        <Route path="lessons/:lessonId/questions" element={<QuestionsPage />} />
+      <Route path="/" element={<Navigate to="/studio" replace />} />
+      <Route path="/join/:sessionSlug" element={<JoinPage />} />
+      <Route path="/studio" element={<StudioLayout />}>
+        <Route index element={<CoursesPage />} />
+        <Route path="courses/:courseId" element={<SessionsPage />} />
+        <Route path="sessions/:sessionId" element={<SessionDetailPage />} />
       </Route>
-
-      {/* Live Presentation */}
-      <Route
-        path="/present/:classSessionId"
-        element={
-          <InstructorAuthGate>
-            <PresentationPage />
-          </InstructorAuthGate>
-        }
-      />
-
-      <Route path="*" element={<Navigate to="/join" replace />} />
+      <Route path="*" element={<Navigate to="/studio" replace />} />
     </Routes>
   );
 }

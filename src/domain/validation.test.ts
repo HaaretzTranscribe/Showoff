@@ -1,131 +1,67 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
-  bilingualTextSchema,
-  createQuestionSchema,
-  joinRequestSchema,
-  sceneConfigSchema,
-  stableKeySchema,
+  isPlausibleName,
+  normalizeAttendanceCode,
+  normalizeName,
+  fullNameSchema,
 } from "./validation";
 
-describe("bilingualTextSchema", () => {
-  it("accepts a lesson title with only Hebrew (unilingual lesson, spec 2.3)", () => {
-    const result = bilingualTextSchema.safeParse({ he: "שיעור פתיחה", en: "" });
-    expect(result.success).toBe(true);
+describe("normalizeName", () => {
+  it("trims leading/trailing whitespace", () => {
+    expect(normalizeName("  David Cohen  ")).toBe("david cohen");
   });
 
-  it("rejects when both languages are empty", () => {
-    const result = bilingualTextSchema.safeParse({ he: "", en: "" });
-    expect(result.success).toBe(false);
-  });
-});
-
-describe("stableKeySchema", () => {
-  it("accepts snake_case keys", () => {
-    expect(stableKeySchema.safeParse("q_sleep_hours").success).toBe(true);
+  it("collapses repeated internal whitespace", () => {
+    expect(normalizeName("David   Cohen")).toBe("david cohen");
   });
 
-  it("rejects keys starting with a digit or containing spaces", () => {
-    expect(stableKeySchema.safeParse("1_bad").success).toBe(false);
-    expect(stableKeySchema.safeParse("bad key").success).toBe(false);
+  it("is case-insensitive", () => {
+    expect(normalizeName("DAVID COHEN")).toBe(normalizeName("david cohen"));
+  });
+
+  it("treats retyping variants as the same normalized name", () => {
+    expect(normalizeName(" David  Cohen")).toBe(normalizeName("david cohen "));
   });
 });
 
-describe("createQuestionSchema", () => {
-  const base = {
-    lessonId: "11111111-1111-4111-8111-111111111111",
-    stableKey: "q_sleep_hours",
-    prompt: { he: "כמה שעות שינה?", en: "How many hours of sleep?" },
-    orderIndex: 0,
-  };
-
-  it("validates a scale question requires min/max/step in config", () => {
-    const missingConfig = createQuestionSchema.safeParse({
-      ...base,
-      type: "scale",
-      config: { required: true },
-    });
-    expect(missingConfig.success).toBe(false);
-
-    const valid = createQuestionSchema.safeParse({
-      ...base,
-      type: "scale",
-      config: { required: true, min: 1, max: 5, step: 1 },
-    });
-    expect(valid.success).toBe(true);
+describe("isPlausibleName", () => {
+  it("rejects empty input", () => {
+    expect(isPlausibleName("")).toBe(false);
   });
 
-  it("validates multiple_choice minSelections/maxSelections are non-negative", () => {
-    const result = createQuestionSchema.safeParse({
-      ...base,
-      type: "multiple_choice",
-      config: { required: false, minSelections: -1 },
-    });
-    expect(result.success).toBe(false);
+  it("rejects a single character", () => {
+    expect(isPlausibleName("D")).toBe(false);
   });
 
-  it("accepts yes_no with just the base config", () => {
-    const result = createQuestionSchema.safeParse({
-      ...base,
-      type: "yes_no",
-      config: { required: true },
-    });
-    expect(result.success).toBe(true);
+  it("rejects digit-only input", () => {
+    expect(isPlausibleName("12345")).toBe(false);
+  });
+
+  it("accepts a normal name", () => {
+    expect(isPlausibleName("David Cohen")).toBe(true);
+  });
+
+  it("accepts a Hebrew name", () => {
+    expect(isPlausibleName("דוד כהן")).toBe(true);
   });
 });
 
-describe("joinRequestSchema", () => {
-  it("uppercases and validates the attendance code", () => {
-    const result = joinRequestSchema.safeParse({
-      sessionId: "11111111-1111-4111-8111-111111111111",
-      studentIdentifier: "123456789",
-      attendanceCode: "ab3d9k",
-    });
-    expect(result.success).toBe(true);
-    if (result.success) {
-      expect(result.data.attendanceCode).toBe("AB3D9K");
-    }
-  });
-
-  it("rejects codes with invalid characters or length", () => {
-    const result = joinRequestSchema.safeParse({
-      sessionId: "11111111-1111-4111-8111-111111111111",
-      studentIdentifier: "123456789",
-      attendanceCode: "!!",
-    });
-    expect(result.success).toBe(false);
+describe("normalizeAttendanceCode", () => {
+  it("uppercases and strips whitespace", () => {
+    expect(normalizeAttendanceCode(" ab12 ")).toBe("AB12");
   });
 });
 
-describe("sceneConfigSchema", () => {
-  it("accepts the spec's example scene config (section 24) once versioned", () => {
-    const result = sceneConfigSchema.safeParse({
-      schemaVersion: 1,
-      name: { he: "שינה מול מסך", en: "Sleep vs screen time" },
-      chartType: "scatter",
-      bindings: { x: "q_sleep_hours", y: "q_screen_hours", color: "q_gender" },
-      aggregation: "none",
-      filters: [],
-      outlierControls: { enabled: true, manual: true, iqr: true, percentile: true },
-      display: { showSampleSize: true, legend: true },
-      transition: "morph",
-      privacy: { minGroupSize: 5 },
-    });
-    expect(result.success).toBe(true);
+describe("fullNameSchema", () => {
+  it("rejects too-short input", () => {
+    expect(fullNameSchema.safeParse("D").success).toBe(false);
   });
 
-  it("rejects an unversioned or unknown chart type", () => {
-    const result = sceneConfigSchema.safeParse({
-      schemaVersion: 2,
-      name: { he: "x", en: "x" },
-      chartType: "pie3d",
-      bindings: {},
-      aggregation: "none",
-      filters: [],
-      outlierControls: { enabled: false, manual: false, iqr: false, percentile: false },
-      display: { showSampleSize: false, legend: false },
-      transition: "instant",
-      privacy: { minGroupSize: 0 },
-    });
-    expect(result.success).toBe(false);
+  it("rejects input with no letters", () => {
+    expect(fullNameSchema.safeParse("1234").success).toBe(false);
+  });
+
+  it("accepts a plausible name", () => {
+    expect(fullNameSchema.safeParse("David Cohen").success).toBe(true);
   });
 });

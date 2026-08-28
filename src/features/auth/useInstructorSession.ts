@@ -2,20 +2,52 @@ import { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabaseClient";
 
-export function useInstructorSession() {
-  const [session, setSession] = useState<Session | null | undefined>(undefined); // undefined = loading
+export interface InstructorSessionState {
+  loading: boolean;
+  session: Session | null;
+  /** public.users.id — the app-level owner id used by courses.owner_user_id. */
+  userId: string | null;
+}
+
+export function useInstructorSession(): InstructorSessionState {
+  const [loading, setLoading] = useState(true);
+  const [session, setSession] = useState<Session | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => setSession(data.session));
-    const { data: subscription } = supabase.auth.onAuthStateChange((_event, next) => {
-      setSession(next);
+    let cancelled = false;
+
+    async function loadUserId(authSession: Session | null) {
+      if (!authSession) {
+        if (!cancelled) setUserId(null);
+        return;
+      }
+      const { data } = await supabase
+        .from("users")
+        .select("id")
+        .eq("auth_id", authSession.user.id)
+        .maybeSingle();
+      if (!cancelled) setUserId(data?.id ?? null);
+    }
+
+    supabase.auth.getSession().then(({ data }) => {
+      if (cancelled) return;
+      setSession(data.session);
+      loadUserId(data.session).finally(() => {
+        if (!cancelled) setLoading(false);
+      });
     });
-    return () => subscription.subscription.unsubscribe();
+
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      setSession(newSession);
+      void loadUserId(newSession);
+    });
+
+    return () => {
+      cancelled = true;
+      sub.subscription.unsubscribe();
+    };
   }, []);
 
-  // Anonymous student sessions must never be treated as an instructor
-  // session, even though both are technically "logged in" (spec 13).
-  const isInstructor = Boolean(session && !session.user.is_anonymous);
-
-  return { session: isInstructor ? session : null, loading: session === undefined };
+  return { loading, session, userId };
 }

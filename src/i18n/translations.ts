@@ -1,201 +1,234 @@
-/**
- * Central typed translation dictionary (spec section 2.3 / 27:
- * "שכבת i18n מרכזית; אין לכתוב מחרוזות UI ישירות בתוך components").
- * Components never hardcode UI strings — they call t("some.key") and
- * get a compile-time error if the key doesn't exist in *both* locales,
- * because `en` is the type source and `he` is checked against it.
- */
+export type Language = "en" | "he";
 
-const en = {
+export const languages: Language[] = ["en", "he"];
+
+export const languageDir: Record<Language, "ltr" | "rtl"> = {
+  en: "ltr",
+  he: "rtl",
+};
+
+export const languageLabel: Record<Language, string> = {
+  en: "English",
+  he: "עברית",
+};
+
+export interface Dictionary {
+  languageName: string;
+  join: {
+    loading: string;
+    notFoundTitle: string;
+    notFoundBody: string;
+    notOpenTitle: string;
+    notOpenBody: string;
+    closedTitle: string;
+    closedBody: string;
+    fullNameLabel: string;
+    fullNamePlaceholder: string;
+    attendanceCodeLabel: string;
+    attendanceCodePlaceholder: string;
+    submit: string;
+    submitting: string;
+    confirmedTitle: string;
+    alreadyRecordedTitle: string;
+    continueButton: string;
+    errorInvalidCode: string;
+    errorNameTooShort: string;
+    errorGeneric: string;
+    errorNetwork: string;
+  };
+  studio: {
+    signInTitle: string;
+    emailLabel: string;
+    emailPlaceholder: string;
+    sendLink: string;
+    checkEmail: string;
+    signOut: string;
+    coursesTitle: string;
+    newCourseNamePlaceholder: string;
+    createCourse: string;
+    noCourses: string;
+    sessionsTitle: string;
+    newSessionTitle: string;
+    sessionTitleLabel: string;
+    sessionTitlePlaceholder: string;
+    sessionDateLabel: string;
+    attendanceCodeLabel: string;
+    pollsliveUrlLabel: string;
+    pollsliveUrlPlaceholder: string;
+    createSession: string;
+    status: string;
+    statusDraft: string;
+    statusOpen: string;
+    statusClosed: string;
+    openAttendance: string;
+    closeAttendance: string;
+    changeCode: string;
+    save: string;
+    cancel: string;
+    attendeeCount: string;
+    attendanceListTitle: string;
+    exportCsv: string;
+    addAttendee: string;
+    addAttendeePlaceholder: string;
+    add: string;
+    remove: string;
+    joinUrlLabel: string;
+    copyJoinUrl: string;
+    copied: string;
+    noAttendees: string;
+    noSessions: string;
+  };
   common: {
-    appName: "ShowOff",
-    languageName: "English",
-    switchLanguage: "עברית",
+    loading: string;
+    error: string;
+    back: string;
+  };
+}
+
+const en: Dictionary = {
+  languageName: "English",
+  join: {
     loading: "Loading…",
+    notFoundTitle: "Session not found",
+    notFoundBody: "Check the link or QR code and try again.",
+    notOpenTitle: "Attendance isn't open yet",
+    notOpenBody: "Ask your instructor to open attendance.",
+    closedTitle: "Attendance is closed",
+    closedBody: "This session's attendance window has ended.",
+    fullNameLabel: "Full name",
+    fullNamePlaceholder: "Your full name",
+    attendanceCodeLabel: "Attendance code",
+    attendanceCodePlaceholder: "Code",
+    submit: "Enter class",
+    submitting: "Submitting…",
+    confirmedTitle: "Attendance recorded ✓",
+    alreadyRecordedTitle: "Attendance already recorded",
+    continueButton: "Continue to class",
+    errorInvalidCode: "Wrong attendance code",
+    errorNameTooShort: "Please enter your full name",
+    errorGeneric: "Something went wrong. Please try again.",
+    errorNetwork: "Network error. Please check your connection and try again.",
+  },
+  studio: {
+    signInTitle: "Instructor sign in",
+    emailLabel: "Email",
+    emailPlaceholder: "you@university.edu",
+    sendLink: "Send magic link",
+    checkEmail: "Check your email for a sign-in link.",
+    signOut: "Sign out",
+    coursesTitle: "Courses",
+    newCourseNamePlaceholder: "Course name",
+    createCourse: "Create course",
+    noCourses: "No courses yet.",
+    sessionsTitle: "Sessions",
+    newSessionTitle: "New session",
+    sessionTitleLabel: "Session title",
+    sessionTitlePlaceholder: "e.g. Lecture 3",
+    sessionDateLabel: "Session date",
+    attendanceCodeLabel: "Attendance code",
+    pollsliveUrlLabel: "PollsLive join URL",
+    pollsliveUrlPlaceholder: "https://pollslive.com/...",
+    createSession: "Create session",
+    status: "Status",
+    statusDraft: "Draft",
+    statusOpen: "Open",
+    statusClosed: "Closed",
+    openAttendance: "Open attendance",
+    closeAttendance: "Close attendance",
+    changeCode: "Change code",
     save: "Save",
     cancel: "Cancel",
-    edit: "Edit",
-    delete: "Delete",
-    confirmDelete: "Are you sure?",
-    error: "Something went wrong",
-    retry: "Retry",
+    attendeeCount: "attendees",
+    attendanceListTitle: "Attendance",
+    exportCsv: "Export CSV",
+    addAttendee: "Add attendee",
+    addAttendeePlaceholder: "Full name",
+    add: "Add",
+    remove: "Remove",
+    joinUrlLabel: "Student join link",
+    copyJoinUrl: "Copy link",
+    copied: "Copied",
+    noAttendees: "No attendance recorded yet.",
+    noSessions: "No sessions yet.",
   },
+  common: {
+    loading: "Loading…",
+    error: "Error",
+    back: "Back",
+  },
+};
+
+const he: Dictionary = {
+  languageName: "עברית",
   join: {
-    title: "Join the class",
-    identifierLabel: "Full name",
-    codeLabel: "Class code",
-    submit: "Join",
-    submitting: "Joining…",
-    success: "You're in! Waiting for the questionnaire to open.",
-    genericError: "Couldn't join. Check your ID and the class code and try again.",
-    authRequiredError: "Connection not ready yet — please retry in a moment.",
-  },
-  questionnaire: {
-    submit: "Submit",
-    submitting: "Submitting…",
-    submitted: "Submitted",
-    editHint: "You can still update your answer until the instructor locks responses.",
-    lockedNotice: "Responses are locked. You can no longer edit your answers.",
+    loading: "טוען…",
+    notFoundTitle: "המפגש לא נמצא",
+    notFoundBody: "בדקו את הקישור או קוד ה-QR ונסו שוב.",
+    notOpenTitle: "הנוכחות עדיין לא נפתחה",
+    notOpenBody: "בקשו מהמרצה לפתוח את הנוכחות.",
+    closedTitle: "הנוכחות נסגרה",
+    closedBody: "חלון הנוכחות למפגש הזה הסתיים.",
+    fullNameLabel: "שם מלא",
+    fullNamePlaceholder: "השם המלא שלך",
+    attendanceCodeLabel: "קוד נוכחות",
+    attendanceCodePlaceholder: "קוד",
+    submit: "כניסה לשיעור",
+    submitting: "שולח…",
+    confirmedTitle: "הנוכחות נרשמה ✓",
+    alreadyRecordedTitle: "הנוכחות כבר נרשמה",
+    continueButton: "המשך לשיעור",
+    errorInvalidCode: "קוד נוכחות שגוי",
+    errorNameTooShort: "נא להזין שם מלא",
+    errorGeneric: "משהו השתבש. נסו שוב.",
+    errorNetwork: "שגיאת רשת. בדקו את החיבור ונסו שוב.",
   },
   studio: {
-    nav: {
-      courses: "Courses",
-      lessons: "Lessons",
-      questions: "Questions",
-    },
-    courses: {
-      title: "Courses",
-      newCourse: "New course",
-      titleLabel: "Course title",
-      empty: "No courses yet.",
-    },
-    lessons: {
-      title: "Lessons",
-      newLesson: "New lesson",
-      titleLabelHe: "Title (Hebrew)",
-      titleLabelEn: "Title (English)",
-      plannedAt: "Planned date",
-      rosterPolicy: "Roster policy",
-      empty: "No lessons yet.",
-      openSession: "Open session",
-      openResponses: "Open questionnaire",
-      sessionCode: "Class code",
-      openPresentation: "Open presentation screen",
-      exportAttendance: "Export attendance (CSV)",
-      joinUrlHint: "Students join at",
-    },
-    questions: {
-      title: "Questions",
-      newQuestion: "New question",
-      type: "Type",
-      promptHe: "Prompt (Hebrew)",
-      promptEn: "Prompt (English)",
-      empty: "No questions yet.",
-      answerOptions: "Answer options",
-      optionLabelHe: "Option (Hebrew)",
-      optionLabelEn: "Option (English)",
-      addOption: "Add option",
-      noOptionsYet: "No answer options yet — students won't be able to answer this question.",
-    },
-  },
-  presentation: {
-    waiting: "Waiting for students to join",
-    liveCount: "Joined",
-    noSessionSelected: "Open a lesson's session to start presenting.",
-  },
-} as const;
-
-const he: Translation<typeof en> = {
-  common: {
-    appName: "ShowOff",
-    languageName: "עברית",
-    switchLanguage: "English",
-    loading: "טוען…",
+    signInTitle: "כניסת מרצה",
+    emailLabel: "אימייל",
+    emailPlaceholder: "you@university.edu",
+    sendLink: "שלחו קישור כניסה",
+    checkEmail: "בדקו את תיבת הדוא\"ל שלכם לקישור כניסה.",
+    signOut: "התנתקות",
+    coursesTitle: "קורסים",
+    newCourseNamePlaceholder: "שם הקורס",
+    createCourse: "יצירת קורס",
+    noCourses: "אין עדיין קורסים.",
+    sessionsTitle: "מפגשים",
+    newSessionTitle: "מפגש חדש",
+    sessionTitleLabel: "כותרת המפגש",
+    sessionTitlePlaceholder: "לדוגמה: הרצאה 3",
+    sessionDateLabel: "תאריך המפגש",
+    attendanceCodeLabel: "קוד נוכחות",
+    pollsliveUrlLabel: "קישור הצטרפות ל-PollsLive",
+    pollsliveUrlPlaceholder: "https://pollslive.com/...",
+    createSession: "יצירת מפגש",
+    status: "סטטוס",
+    statusDraft: "טיוטה",
+    statusOpen: "פתוח",
+    statusClosed: "סגור",
+    openAttendance: "פתיחת נוכחות",
+    closeAttendance: "סגירת נוכחות",
+    changeCode: "שינוי קוד",
     save: "שמירה",
     cancel: "ביטול",
-    edit: "עריכה",
-    delete: "מחיקה",
-    confirmDelete: "למחוק?",
-    error: "משהו השתבש",
-    retry: "נסה שוב",
+    attendeeCount: "נוכחים",
+    attendanceListTitle: "נוכחות",
+    exportCsv: "ייצוא CSV",
+    addAttendee: "הוספת נוכח",
+    addAttendeePlaceholder: "שם מלא",
+    add: "הוספה",
+    remove: "הסרה",
+    joinUrlLabel: "קישור הצטרפות לסטודנטים",
+    copyJoinUrl: "העתקת קישור",
+    copied: "הועתק",
+    noAttendees: "עדיין לא נרשמה נוכחות.",
+    noSessions: "אין עדיין מפגשים.",
   },
-  join: {
-    title: "הצטרפות לשיעור",
-    identifierLabel: "שם מלא",
-    codeLabel: "קוד כיתה",
-    submit: "הצטרפות",
-    submitting: "מצטרף…",
-    success: "הצטרפת! ממתין לפתיחת השאלון.",
-    genericError: "ההצטרפות נכשלה. בדקו את המספר ואת קוד הכיתה ונסו שוב.",
-    authRequiredError: "החיבור עדיין לא מוכן — נסו שוב בעוד רגע.",
-  },
-  questionnaire: {
-    submit: "שליחה",
-    submitting: "שולח…",
-    submitted: "נשלח",
-    editHint: "ניתן עדיין לעדכן את התשובה עד שהמרצה ינעל את התשובות.",
-    lockedNotice: "התשובות נעולות. לא ניתן עוד לערוך.",
-  },
-  studio: {
-    nav: {
-      courses: "קורסים",
-      lessons: "שיעורים",
-      questions: "שאלות",
-    },
-    courses: {
-      title: "קורסים",
-      newCourse: "קורס חדש",
-      titleLabel: "שם הקורס",
-      empty: "אין עדיין קורסים.",
-    },
-    lessons: {
-      title: "שיעורים",
-      newLesson: "שיעור חדש",
-      titleLabelHe: "כותרת (עברית)",
-      titleLabelEn: "כותרת (אנגלית)",
-      plannedAt: "תאריך מתוכנן",
-      rosterPolicy: "מדיניות roster",
-      empty: "אין עדיין שיעורים.",
-      openSession: "פתיחת session",
-      openResponses: "פתיחת שאלון",
-      sessionCode: "קוד כיתה",
-      openPresentation: "פתיחת מסך הקרנה",
-      exportAttendance: "ייצוא נוכחות (CSV)",
-      joinUrlHint: "סטודנטים מצטרפים ב",
-    },
-    questions: {
-      title: "שאלות",
-      newQuestion: "שאלה חדשה",
-      type: "סוג",
-      promptHe: "ניסוח (עברית)",
-      promptEn: "ניסוח (אנגלית)",
-      empty: "אין עדיין שאלות.",
-      answerOptions: "אפשרויות תשובה",
-      optionLabelHe: "אפשרות (עברית)",
-      optionLabelEn: "אפשרות (אנגלית)",
-      addOption: "הוספת אפשרות",
-      noOptionsYet: "אין עדיין אפשרויות תשובה — סטודנטים לא יוכלו לענות על השאלה הזו.",
-    },
-  },
-  presentation: {
-    waiting: "ממתין להצטרפות סטודנטים",
-    liveCount: "הצטרפו",
-    noSessionSelected: "פתחו session של שיעור כדי להתחיל להקרין.",
+  common: {
+    loading: "טוען…",
+    error: "שגיאה",
+    back: "חזרה",
   },
 };
 
-/** Forces `he` to have exactly the same shape as `en`, string-for-string. */
-type Translation<T> = { [K in keyof T]: T[K] extends string ? string : Translation<T[K]> };
-
-export type Locale = "he" | "en";
-
-export const dictionaries: Record<Locale, Translation<typeof en>> = { en, he };
-
-export const localeDirection: Record<Locale, "rtl" | "ltr"> = {
-  he: "rtl",
-  en: "ltr",
-};
-
-type DotPaths<T, Prefix extends string = ""> = T extends string
-  ? Prefix
-  : {
-      [K in keyof T & string]: DotPaths<T[K], `${Prefix}${Prefix extends "" ? "" : "."}${K}`>;
-    }[keyof T & string];
-
-export type TranslationKey = DotPaths<typeof en>;
-
-export function resolveTranslation(locale: Locale, key: TranslationKey): string {
-  const parts = key.split(".");
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let node: any = dictionaries[locale];
-  for (const part of parts) {
-    node = node?.[part];
-  }
-  if (typeof node !== "string") {
-    // Fall back to English rather than crashing the render.
-    let fallback: any = dictionaries.en;
-    for (const part of parts) fallback = fallback?.[part];
-    return typeof fallback === "string" ? fallback : key;
-  }
-  return node;
-}
+export const dictionaries: Record<Language, Dictionary> = { en, he };

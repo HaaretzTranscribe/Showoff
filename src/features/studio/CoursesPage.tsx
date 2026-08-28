@@ -1,56 +1,81 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState, type FormEvent } from "react";
+import { Link, useOutletContext } from "react-router-dom";
 import { useI18n } from "@/i18n/I18nProvider";
 import { errorMessage } from "@/lib/errorMessage";
+import type { Course } from "@/domain/types";
 import { createCourse, listCourses } from "./api";
+import type { StudioOutletContext } from "./StudioLayout";
 
 export function CoursesPage() {
+  const { userId } = useOutletContext<StudioOutletContext>();
   const { t } = useI18n();
-  const queryClient = useQueryClient();
-  const [title, setTitle] = useState("");
+  const [courses, setCourses] = useState<Course[] | null>(null);
+  const [name, setName] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
 
-  const coursesQuery = useQuery({ queryKey: ["courses"], queryFn: listCourses });
-  const createMutation = useMutation({
-    mutationFn: createCourse,
-    onSuccess: () => {
-      setTitle("");
-      queryClient.invalidateQueries({ queryKey: ["courses"] });
-    },
-  });
+  useEffect(() => {
+    listCourses()
+      .then(setCourses)
+      .catch((e) => setError(errorMessage(e)));
+  }, []);
+
+  async function handleCreate(e: FormEvent) {
+    e.preventDefault();
+    if (!name.trim()) return;
+    setCreating(true);
+    setError(null);
+    try {
+      const course = await createCourse(userId, name.trim());
+      setCourses((prev) => [course, ...(prev ?? [])]);
+      setName("");
+    } catch (err) {
+      setError(errorMessage(err));
+    } finally {
+      setCreating(false);
+    }
+  }
 
   return (
-    <section>
-      <h1>{t("studio.courses.title")}</h1>
+    <div className="flex flex-col gap-6">
+      <h1 className="text-2xl font-bold">{t.studio.coursesTitle}</h1>
 
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (title.trim()) createMutation.mutate(title.trim());
-        }}
-      >
-        <label>
-          {t("studio.courses.titleLabel")}
-          <input value={title} onChange={(e) => setTitle(e.target.value)} required />
-        </label>
-        <button type="submit" disabled={createMutation.isPending}>
-          {t("studio.courses.newCourse")}
+      <form onSubmit={handleCreate} className="flex gap-2">
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder={t.studio.newCourseNamePlaceholder}
+          className="flex-1 border border-gray-300 rounded-lg px-3 py-2"
+        />
+        <button
+          type="submit"
+          disabled={creating}
+          className="bg-gray-900 text-white rounded-lg px-4 py-2 font-medium disabled:opacity-50"
+        >
+          {t.studio.createCourse}
         </button>
-        {createMutation.isError && <p role="alert">{errorMessage(createMutation.error)}</p>}
       </form>
 
-      {coursesQuery.isLoading && <p>{t("common.loading")}</p>}
-      {coursesQuery.isError && <p role="alert">{t("common.error")}</p>}
+      {error && <p className="text-red-600 text-sm">{error}</p>}
 
-      {coursesQuery.data && coursesQuery.data.length === 0 && <p>{t("studio.courses.empty")}</p>}
-
-      <ul>
-        {coursesQuery.data?.map((course) => (
-          <li key={course.id}>
-            <Link to={`/studio/courses/${course.id}/lessons`}>{course.title}</Link>
-          </li>
-        ))}
-      </ul>
-    </section>
+      {courses === null ? (
+        <p className="text-gray-500">{t.common.loading}</p>
+      ) : courses.length === 0 ? (
+        <p className="text-gray-500">{t.studio.noCourses}</p>
+      ) : (
+        <ul className="flex flex-col gap-2">
+          {courses.map((course) => (
+            <li key={course.id}>
+              <Link
+                to={`/studio/courses/${course.id}`}
+                className="block border border-gray-200 rounded-lg px-4 py-3 hover:bg-gray-50"
+              >
+                {course.name}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
