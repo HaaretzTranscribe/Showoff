@@ -4,6 +4,7 @@ import { useI18n } from "@/i18n/I18nProvider";
 import { LanguageSwitcher } from "@/i18n/LanguageSwitcher";
 import { JoinPage } from "@/features/join/JoinPage";
 import { LiveSessionPage } from "@/features/live/LiveSessionPage";
+import { InstructorControlPage } from "@/features/instructor/InstructorControlPage";
 
 function NotConfiguredScreen() {
   return (
@@ -40,6 +41,7 @@ export function App() {
       <Route path="/" element={<HomePage />} />
       <Route path="/join/:sessionSlug" element={<JoinPage />} />
       <Route path="/live/:sessionSlug" element={<LiveSessionPage />} />
+      <Route path="/control/:sessionSlug" element={<InstructorControlPage />} />
       <Route path="*" element={<HomePage />} />
     </Routes>
   );

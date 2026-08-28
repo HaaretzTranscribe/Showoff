@@ -30,6 +30,13 @@ export interface Dictionary {
     formMissing: string;
     continueButton: string;
   };
+  control: {
+    title: string;
+    waitingOption: string;
+    activeLabel: string;
+    loading: string;
+    noQuestions: string;
+  };
   common: {
     loading: string;
     error: string;
@@ -56,6 +63,13 @@ const en: Dictionary = {
     formMissing: "No roll-call form has been set up for this session yet.",
     continueButton: "Continue to class",
   },
+  control: {
+    title: "Question control",
+    waitingOption: "Waiting / no active question",
+    activeLabel: "live now",
+    loading: "Loading questions…",
+    noQuestions: "No questions configured for this lesson yet.",
+  },
   common: {
     loading: "Loading…",
     error: "Error",
@@ -81,6 +95,13 @@ const he: Dictionary = {
     formInstructions: "הזינו את הפרטים שלכם והקוד שמוצג בכיתה בטופס שמופיע למטה.",
     formMissing: "עדיין לא הוגדר טופס נוכחות למפגש הזה.",
     continueButton: "המשך לשיעור",
+  },
+  control: {
+    title: "בקרת שאלות",
+    waitingOption: "המתנה / אין שאלה פעילה",
+    activeLabel: "פעיל כעת",
+    loading: "טוען שאלות…",
+    noQuestions: "עדיין לא הוגדרו שאלות למפגש הזה.",
   },
   common: {
     loading: "טוען…",
