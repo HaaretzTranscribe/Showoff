@@ -60,7 +60,7 @@ so "Course Name", "course_name", and "Course-Name" all work the same:
 | `course_name` / `course` | Shown to the student |
 | `session_title` / `title` / `lesson_title` | Shown to the student |
 | `session_date` / `date` | Shown to the student (any human-readable string is fine — it's not parsed for logic) |
-| `attendance_code` / `code` | Shown large on the join page; **not validated by ShowOff or the Form** — course staff cross-check it against the Form response timestamps by hand |
+| `attendance_code` / `code` | **Not shown anywhere on the join page** — the instructor puts it on their in-class slideshow instead, so only someone physically in the room can see it. ShowOff fetches this column (it's in the same CSV row as everything else) but never renders it; the field exists only as the instructor's own record of what code was correct that day, for the manual cross-check against Form response timestamps. |
 | `google_form_url` / `form_url` | Embedded as the roll-call iframe |
 | `status` | `draft`, `open`, or `closed` (anything else is treated as `draft`) — this is how attendance gets "opened"/"closed" now: edit the cell |
 
@@ -87,6 +87,17 @@ issues.
   question-switching (see the other addendum) will need an actual push
   mechanism if it wants same-second updates; a CSV poll is likely
   insufficient there and should be reconsidered at that point.
+- **The code isn't a real secret against a determined student.** The
+  join page never renders `attendance_code` (see the column table
+  above — this was a deliberate fix after an early version briefly did
+  render it, which would have made the code pointless), but the whole
+  CSV row is still fetched into the browser regardless of what's
+  displayed, so anyone who opens dev tools and inspects the network
+  response — or fetches `VITE_SESSIONS_SHEET_CSV_URL` directly — can
+  still read it. This is fine against the stated threat model (casual
+  sharing of the join link/code, not an adversary actively inspecting
+  network traffic); it is not real access control. Don't rely on it
+  for anything higher-stakes than that.
 
 ## Privacy boundary — still the same, still trivially true
 

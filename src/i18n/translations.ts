@@ -26,7 +26,6 @@ export interface Dictionary {
     notOpenBody: string;
     closedTitle: string;
     closedBody: string;
-    codeLabel: string;
     formInstructions: string;
     formMissing: string;
     continueButton: string;
@@ -53,8 +52,7 @@ const en: Dictionary = {
     notOpenBody: "Ask your instructor to open attendance.",
     closedTitle: "Attendance is closed",
     closedBody: "This session's attendance window has ended.",
-    codeLabel: "Today's code",
-    formInstructions: "Enter your name and the code above in the form below.",
+    formInstructions: "Enter your details and the code shown in class in the form below.",
     formMissing: "No roll-call form has been set up for this session yet.",
     continueButton: "Continue to class",
   },
@@ -80,8 +78,7 @@ const he: Dictionary = {
     notOpenBody: "בקשו מהמרצה לפתוח את הנוכחות.",
     closedTitle: "הנוכחות נסגרה",
     closedBody: "חלון הנוכחות למפגש הזה הסתיים.",
-    codeLabel: "הקוד של היום",
-    formInstructions: "הזינו את שמכם ואת הקוד שלמעלה בטופס שמופיע למטה.",
+    formInstructions: "הזינו את הפרטים שלכם והקוד שמוצג בכיתה בטופס שמופיע למטה.",
     formMissing: "עדיין לא הוגדר טופס נוכחות למפגש הזה.",
     continueButton: "המשך לשיעור",
   },

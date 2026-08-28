@@ -87,11 +87,6 @@ export function JoinPage() {
               <DateLine sessionDate={session.sessionDate} lang={lang} />
             </div>
 
-            <div className="text-center">
-              <p className="text-sm font-medium text-gray-500">{t.join.codeLabel}</p>
-              <p className="text-4xl font-bold tracking-[0.3em]">{session.attendanceCode}</p>
-            </div>
-
             <p className="text-center text-sm text-gray-500">{t.join.formInstructions}</p>
 
             {session.googleFormUrl ? (

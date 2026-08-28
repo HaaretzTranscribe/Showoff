@@ -11,8 +11,9 @@ before touching anything data-related).
 
 This is a deliberately thin, **backend-free** app with exactly two jobs:
 
-1. Show the student the day's attendance code and that lesson's
-   roll-call Google Form, embedded in the page.
+1. Show the student that lesson's roll-call Google Form, embedded in
+   the page. The attendance code is deliberately **not** shown here —
+   see "Student flow" below.
 2. Move the student into a persistent, in-app live-session page.
 
 **There is no database, no server, and no instructor login.**
@@ -85,15 +86,25 @@ publish dir `dist`, SPA redirect so client-side routes like
 
 ## Environment variables
 
-See `.env.example`. `VITE_SESSIONS_SHEET_CSV_URL` is safe to expose —
-it points at a sheet that's already meant to be publicly readable, the
-same trust level as the QR code students scan.
+See `.env.example`. `VITE_SESSIONS_SHEET_CSV_URL` is safe to expose in
+the sense that it's fetched by every visitor's browser anyway — but
+note that means `attendance_code` is technically present in that
+fetch too, even though the UI never renders it (see "Student flow" and
+the no-backend addendum's trade-offs section).
 
 ## Student flow
 
-`/join/:sessionSlug` → see the course, the day's code, and the
-embedded roll-call Google Form (student fills in name/email/code
-directly in the Form) → tap Continue → `/live/:sessionSlug`.
+`/join/:sessionSlug` → see the course and the embedded roll-call
+Google Form (student fills in name/email/code directly in the Form) →
+tap Continue → `/live/:sessionSlug`.
+
+**The attendance code is never shown on this page.** It's meant to be
+projected on the instructor's in-class slideshow instead — students
+read it off the screen in the room, not off the website — otherwise
+the code would prove nothing (anyone with the join link could see it).
+`attendance_code` still lives in the Sheet purely as the instructor's
+own record for the manual cross-check against Form response
+timestamps.
 
 `/live/:sessionSlug` (`src/features/live/LiveSessionPage.tsx`) is a
 persistent, low-key waiting screen for Phase 1 ("Waiting for the next
