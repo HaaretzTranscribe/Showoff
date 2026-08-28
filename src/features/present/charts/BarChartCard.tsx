@@ -22,6 +22,7 @@ function ValueLabel({ x, y, width, value, suffix }: ValueLabelProps & { suffix: 
   if (Number.isNaN(numX) || Number.isNaN(numY) || Number.isNaN(numWidth)) return null;
   return (
     <text
+      className="chart-value-label"
       x={numX + numWidth / 2}
       y={numY - 12}
       textAnchor="middle"

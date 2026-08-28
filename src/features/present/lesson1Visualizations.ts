@@ -99,9 +99,12 @@ export function viz5(table: ResponseTable): BarDatum[] {
   }));
 }
 
-function costTimeRows(table: ResponseTable): { satisfaction: string; cost: number | null; time: number | null }[] {
+function costTimeRows(
+  table: ResponseTable
+): { satisfaction: string; method: string; cost: number | null; time: number | null }[] {
   return table.rows.map((row) => ({
     satisfaction: (row[COL.q4.satisfaction] ?? "").trim(),
+    method: (row[COL.q4.method] ?? "").trim(),
     cost: parseLenientNumber(row[COL.q4.cost] ?? ""),
     time: parseLenientNumber(row[COL.q4.time] ?? ""),
   }));
@@ -172,6 +175,7 @@ export function viz9(table: ResponseTable): BarDatum[] {
 export function viz10(table: ResponseTable): ScatterGroup[] {
   const allRows = costTimeRows(table).filter((r) => r.time !== null && r.cost !== null) as {
     satisfaction: string;
+    method: string;
     time: number;
     cost: number;
   }[];
@@ -189,7 +193,7 @@ export function viz10(table: ResponseTable): ScatterGroup[] {
   };
 
   for (const row of rows) {
-    const point = { x: row.time, y: row.cost };
+    const point = { x: row.time, y: row.cost, method: row.method || undefined };
     if (row.satisfaction === VERY_POSITIVE) groups.pleased.points.push(point);
     else if (row.satisfaction === VERY_NEGATIVE) groups.unpleased.points.push(point);
     else groups.mixed.points.push(point);

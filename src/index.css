@@ -55,8 +55,18 @@ html[dir="rtl"] {
   }
 }
 
+.chart-bars-animated {
+  --bar-grow-duration: 1.6s;
+}
+
 .chart-bars-animated .recharts-bar-rectangle path {
   transform-box: fill-box;
   transform-origin: bottom;
-  animation: bar-grow-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: bar-grow-up var(--bar-grow-duration) cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Value-number labels stay invisible until their bar has finished growing. */
+.chart-bars-animated .chart-value-label {
+  opacity: 0;
+  animation: fade-in 0.35s ease-out var(--bar-grow-duration) both;
 }
