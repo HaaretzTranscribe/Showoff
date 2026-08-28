@@ -6,8 +6,8 @@
   NODE_VERSION = "20"
 
 # Single-page app: any path not matching a static asset falls through
-# to index.html so react-router's client-side routes (/join, /live,
-# /studio, ...) work on hard refresh / direct link.
+# to index.html so react-router's client-side routes (/join, /live)
+# work on hard refresh / direct link.
 [[redirects]]
   from = "/*"
   to = "/index.html"

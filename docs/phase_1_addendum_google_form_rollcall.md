@@ -1,5 +1,13 @@
 # Phase 1 addendum: roll call moves to an embedded Google Form
 
+> **Partially superseded** by
+> [`phase_1_addendum_no_backend.md`](./phase_1_addendum_no_backend.md):
+> the Google Form roll-call mechanism described here is unchanged, but
+> "Studio's session detail page" and "instructor sets/edits it" below
+> now mean editing a Google Sheet directly — Supabase, Studio, and
+> instructor auth were removed entirely. Read the newer addendum for
+> how course/session config actually works now.
+
 This supersedes [`phase_1_addendum_live_session.md`](./phase_1_addendum_live_session.md)'s
 assumption that ShowOff itself records attendance, and supersedes
 [`ShowOff_spec_1_attendance_join.md`](./ShowOff_spec_1_attendance_join.md)

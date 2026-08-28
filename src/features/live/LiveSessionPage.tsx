@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useI18n } from "@/i18n/I18nProvider";
 import { LanguageSwitcher } from "@/i18n/LanguageSwitcher";
-import { getPublicSessionInfo } from "@/features/join/attendanceApi";
+import { getPublicSessionInfo } from "@/lib/sheetSessions";
 import type { PublicSessionInfo } from "@/domain/types";
 
 /**
