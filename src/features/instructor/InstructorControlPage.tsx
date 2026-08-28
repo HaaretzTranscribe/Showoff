@@ -53,21 +53,21 @@ export function InstructorControlPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900">
-      <div className="flex items-center justify-between p-4 border-b bg-white">
-        <span className="font-semibold">{t.control.title}</span>
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white text-slate-900">
+      <div className="flex items-center justify-between border-b border-blue-100 bg-white/80 p-4 backdrop-blur">
+        <span className="font-semibold text-blue-900">{t.control.title}</span>
         <LanguageSwitcher />
       </div>
 
-      <div className="max-w-md mx-auto p-4 flex flex-col gap-3">
+      <div className="animate-fade-in-up max-w-md mx-auto p-4 flex flex-col gap-3">
         <button
           type="button"
           onClick={handleClear}
           disabled={pending !== null}
-          className={`w-full text-start px-4 py-4 rounded-xl border text-lg font-medium disabled:opacity-50 ${
+          className={`w-full text-start px-4 py-4 rounded-xl border text-lg font-medium transition-all disabled:opacity-50 ${
             activeQuestionNumber === null
-              ? "bg-gray-900 text-white border-gray-900"
-              : "bg-white border-gray-300 hover:bg-gray-50"
+              ? "border-blue-700 bg-blue-700 text-white shadow-sm"
+              : "border-blue-100 bg-white hover:border-blue-300 hover:bg-blue-50"
           }`}
         >
           {t.control.waitingOption}
@@ -76,10 +76,10 @@ export function InstructorControlPage() {
           )}
         </button>
 
-        {questions === null && <p className="text-gray-500">{t.control.loading}</p>}
+        {questions === null && <p className="text-slate-400">{t.control.loading}</p>}
 
         {questions !== null && questions.length === 0 && (
-          <p className="text-gray-500">{t.control.noQuestions}</p>
+          <p className="text-slate-400">{t.control.noQuestions}</p>
         )}
 
         {questions?.map((question) => {
@@ -90,10 +90,10 @@ export function InstructorControlPage() {
               type="button"
               onClick={() => handleActivate(question)}
               disabled={pending !== null}
-              className={`w-full text-start px-4 py-4 rounded-xl border text-lg font-medium disabled:opacity-50 ${
+              className={`w-full text-start px-4 py-4 rounded-xl border text-lg font-medium transition-all disabled:opacity-50 ${
                 isActive
-                  ? "bg-gray-900 text-white border-gray-900"
-                  : "bg-white border-gray-300 hover:bg-gray-50"
+                  ? "border-blue-700 bg-blue-700 text-white shadow-sm"
+                  : "border-blue-100 bg-white hover:border-blue-300 hover:bg-blue-50"
               }`}
             >
               {question.questionNumber}. {question.title}

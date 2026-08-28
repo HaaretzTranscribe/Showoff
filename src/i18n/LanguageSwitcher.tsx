@@ -13,8 +13,8 @@ export function LanguageSwitcher() {
           onClick={() => setLang(candidate)}
           className={
             candidate === lang
-              ? "font-semibold underline underline-offset-4"
-              : "text-gray-500 hover:text-gray-800"
+              ? "font-semibold text-blue-700 underline underline-offset-4 decoration-2"
+              : "text-slate-400 transition-colors hover:text-blue-600"
           }
         >
           {languageLabel[candidate]}

@@ -54,12 +54,12 @@ export function LiveSessionPage() {
   }, [sessionSlug]);
 
   return (
-    <div className="h-screen flex flex-col bg-white text-gray-900">
-      <div className="flex items-center justify-between p-4">
+    <div className="h-screen flex flex-col bg-white text-slate-900">
+      <div className="flex items-center justify-between border-b border-blue-50 p-4">
         {session ? (
-          <div>
-            <h2 className="text-sm font-semibold">{session.courseName}</h2>
-            <p className="text-gray-500 text-xs">{session.title}</p>
+          <div className="animate-fade-in">
+            <h2 className="text-sm font-semibold text-blue-900">{session.courseName}</h2>
+            <p className="text-slate-400 text-xs">{session.title}</p>
           </div>
         ) : (
           <span />
@@ -72,13 +72,13 @@ export function LiveSessionPage() {
           key={activeQuestion.formUrl}
           title={activeQuestion.title ?? "Question"}
           src={toEmbedUrl(activeQuestion.formUrl)}
-          className="flex-1 w-full border-0"
+          className="animate-fade-in flex-1 w-full border-0"
         />
       ) : (
-        <div className="flex-1 flex flex-col items-center justify-center px-4 gap-4 text-center">
-          <span aria-hidden="true" className="h-3 w-3 rounded-full bg-gray-900 animate-pulse" />
-          <h1 className="text-2xl font-bold">{t.live.waitingTitle}</h1>
-          <p className="text-gray-500">{t.live.waitingBody}</p>
+        <div className="flex-1 flex flex-col items-center justify-center bg-gradient-to-b from-blue-50 to-white px-4 gap-4 text-center">
+          <span aria-hidden="true" className="h-3 w-3 rounded-full bg-blue-600 animate-pulse" />
+          <h1 className="animate-fade-in-up text-2xl font-bold text-blue-900">{t.live.waitingTitle}</h1>
+          <p className="animate-fade-in-up text-slate-500">{t.live.waitingBody}</p>
         </div>
       )}
     </div>

@@ -1,4 +1,5 @@
 import { parseCsvRecords } from "./csv";
+import { toCsvUrl } from "./googleSheetUrl";
 import type { QuestionInfo } from "@/domain/types";
 
 const questionsCsvUrl = import.meta.env.VITE_QUESTIONS_SHEET_CSV_URL as string | undefined;
@@ -18,21 +19,23 @@ function recordToQuestion(record: Record<string, string>): QuestionInfo | null {
   const googleFormUrl = pick(record, "google_form_url", "form_url");
   if (!lessonKey || !questionNumber || !googleFormUrl) return null;
 
+  const responsesCsvUrl = pick(record, "responses_csv_url", "response_csv_url", "responses_url");
+
   return {
     lessonKey,
     questionNumber,
     title: pick(record, "title", "label"),
     googleFormUrl,
+    responsesCsvUrl: responsesCsvUrl ? toCsvUrl(responsesCsvUrl) : null,
   };
 }
 
-/** Fetches the published questions Sheet (same publish-to-web-as-CSV setup as the lessons sheet) and returns this lesson's questions, ordered. */
-export async function listQuestionsForLesson(lessonKey: string): Promise<QuestionInfo[]> {
+async function fetchAllQuestions(): Promise<QuestionInfo[]> {
   if (!questionsCsvUrl) return [];
 
   let text: string;
   try {
-    const response = await fetch(questionsCsvUrl, { cache: "no-store" });
+    const response = await fetch(toCsvUrl(questionsCsvUrl), { cache: "no-store" });
     if (!response.ok) return [];
     text = await response.text();
   } catch {
@@ -40,12 +43,24 @@ export async function listQuestionsForLesson(lessonKey: string): Promise<Questio
   }
 
   const records = parseCsvRecords(text);
-  const questions = records.map(recordToQuestion).filter((q): q is QuestionInfo => q !== null);
+  return records.map(recordToQuestion).filter((q): q is QuestionInfo => q !== null);
+}
 
+/** Fetches the published questions Sheet and returns this lesson's questions, ordered. */
+export async function listQuestionsForLesson(lessonKey: string): Promise<QuestionInfo[]> {
+  const questions = await fetchAllQuestions();
   return questions
     .filter((q) => q.lessonKey === lessonKey)
     .sort((a, b) => {
       const numericDiff = Number(a.questionNumber) - Number(b.questionNumber);
       return Number.isNaN(numericDiff) ? a.questionNumber.localeCompare(b.questionNumber) : numericDiff;
     });
+}
+
+export async function getQuestion(
+  lessonKey: string,
+  questionNumber: string
+): Promise<QuestionInfo | null> {
+  const questions = await fetchAllQuestions();
+  return questions.find((q) => q.lessonKey === lessonKey && q.questionNumber === questionNumber) ?? null;
 }

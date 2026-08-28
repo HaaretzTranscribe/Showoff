@@ -1,16 +1,18 @@
 # ShowOff
 
-ShowOff's student join layer, plus the first slice of Phase 2. See, in
-order, the spec and the architecture updates that superseded parts of
-it: [`ShowOff_spec_1_attendance_join.md`](./docs/ShowOff_spec_1_attendance_join.md) →
+ShowOff's student join layer, plus Phase 2's live question orchestration
+and presentation visualizations. See, in order, the spec and the
+architecture updates that superseded parts of it:
+[`ShowOff_spec_1_attendance_join.md`](./docs/ShowOff_spec_1_attendance_join.md) →
 [`phase_1_addendum_live_session.md`](./docs/phase_1_addendum_live_session.md) →
 [`phase_1_addendum_google_form_rollcall.md`](./docs/phase_1_addendum_google_form_rollcall.md) →
 [`phase_1_addendum_no_backend.md`](./docs/phase_1_addendum_no_backend.md) →
-[`phase_2_addendum_live_questions.md`](./docs/phase_2_addendum_live_questions.md) —
-read the last two before touching anything data-related or the live
-question flow.
+[`phase_2_addendum_live_questions.md`](./docs/phase_2_addendum_live_questions.md) →
+[`phase_2_addendum_visualizations.md`](./docs/phase_2_addendum_visualizations.md) —
+read the last three before touching anything data-related, the live
+question flow, or the presentation charts.
 
-This is a deliberately thin app with three jobs:
+This is a deliberately thin app with four jobs:
 
 1. Show the student that lesson's roll-call Google Form, embedded in
    the page. The attendance code is deliberately **not** shown here —
@@ -18,6 +20,9 @@ This is a deliberately thin app with three jobs:
 2. Move the student into a persistent, in-app live-session page.
 3. Let the instructor push a question's Google Form live to every
    student on that page at once, with one click, no student refresh.
+4. Let the instructor open a per-question presentation chart on their
+   own screen, built from real (anonymous) response data, self-updating
+   every 5 minutes — see "Presentation visualizations" below.
 
 **Almost entirely backend-free** — courses/lessons/roll-call/questions
 all live in published Google Sheets, fetched as CSV, no database, no
@@ -27,13 +32,16 @@ updates — see "Live question control" below.
 
 ## Stack
 
-- Vite + React + TypeScript
+- Vite + React + TypeScript, Open Sans, a blue/white theme
 - Tailwind CSS
 - React Router (`/join/:sessionSlug`, `/live/:sessionSlug`,
-  `/control/:sessionSlug`)
+  `/control/:sessionSlug`, `/present/:sessionSlug/:vizId`)
+- Recharts (lazy-loaded only on `/present`, so it never bloats the
+  student-facing pages)
 - Vitest
-- Two published Google Sheets, fetched as CSV — the data layer for
-  everything except live question state
+- Published Google Sheets, fetched as CSV — the data layer for
+  everything except live question state (lessons, questions, and each
+  question's response data)
 - One Netlify Function + Netlify Blobs — the data layer for live
   question state only
 
@@ -132,6 +140,23 @@ in [`phase_2_addendum_live_questions.md`](./docs/phase_2_addendum_live_questions
 read it before changing this flow, especially the "access control —
 deliberately none" section.
 
+## Presentation visualizations
+
+`/present/<lesson>/<vizId>` (vizId `1`–`11` for lesson 1) — instructor-
+only, not linked from any student page. Open it before class (link it
+in your slides, or keep a tab open); it fetches that question's
+response Sheet and renders a chart, re-fetching every 5 minutes plus a
+manual "Refresh now" button. Nothing here is pushed to students.
+
+These 11 are bespoke to lesson 1's actual questions, not a generic
+chart-picker — see
+[`phase_2_addendum_visualizations.md`](./docs/phase_2_addendum_visualizations.md)
+for exactly what each one computes and why this isn't a sheet-driven
+engine. Each question's response Sheet needs its own `responses_csv_url`
+column on the Questions sheet, published to web as CSV the same way as
+everything else (and specifically **Publish to web**, not a regular
+"Share" link — the addendum explains why the distinction matters here).
+
 ## Privacy boundary
 
 ShowOff holds no data about students at all — not even in the config
@@ -143,9 +168,9 @@ addenda.
 
 ## What's deliberately not here
 
-Poll response retrieval/aggregation, Google Sheets integration for
-answers, visualization, anonymous respondent IDs, cross-question
-joins, charts, rotating attendance codes, GPS/geofencing, and any
-attendance-to-response identity mapping — see spec section 12 and the
-addenda. These are out of scope by design, not
-oversights.
+A general no-code visualization builder (visualizations are
+hand-written per lesson, see above), anonymous-respondent-ID
+infrastructure, cross-question joins beyond what's described in the
+visualizations addendum, rotating attendance codes, GPS/geofencing,
+and any attendance-to-response identity mapping — see spec section 12
+and the addenda. These are out of scope by design, not oversights.

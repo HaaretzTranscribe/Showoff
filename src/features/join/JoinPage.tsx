@@ -51,12 +51,12 @@ export function JoinPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-white text-gray-900">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-blue-50 to-white text-slate-900">
       <div className="flex justify-end p-4">
         <LanguageSwitcher />
       </div>
       <div className="flex-1 flex flex-col items-center px-4 gap-4">
-        {phase === "loading" && <p className="text-center text-gray-500 mt-4">{t.join.loading}</p>}
+        {phase === "loading" && <p className="text-center text-slate-400 mt-4">{t.join.loading}</p>}
 
         {phase === "not_found" && (
           <StatusMessage title={t.join.notFoundTitle} body={t.join.notFoundBody} />
@@ -81,19 +81,19 @@ export function JoinPage() {
         )}
 
         {phase === "open" && session && (
-          <div className="w-full max-w-sm flex flex-col gap-5 mt-2">
+          <div className="animate-fade-in-up w-full max-w-sm flex flex-col gap-5 mt-2">
             <div className="text-center">
-              <h1 className="text-2xl font-bold">{session.courseName}</h1>
+              <h1 className="text-2xl font-bold text-blue-900">{session.courseName}</h1>
               <DateLine sessionDate={session.sessionDate} lang={lang} />
             </div>
 
-            <p className="text-center text-sm text-gray-500">{t.join.formInstructions}</p>
+            <p className="text-center text-sm text-slate-500">{t.join.formInstructions}</p>
 
             {session.googleFormUrl ? (
               <iframe
                 title="Roll call"
                 src={toEmbedUrl(session.googleFormUrl)}
-                className="w-full border border-gray-200 rounded-xl"
+                className="w-full rounded-xl border border-blue-100 shadow-sm"
                 height={900}
               />
             ) : (
@@ -103,7 +103,7 @@ export function JoinPage() {
             <button
               type="button"
               onClick={handleContinue}
-              className="w-full bg-gray-900 text-white rounded-xl py-4 text-lg font-semibold"
+              className="w-full rounded-xl bg-blue-700 py-4 text-lg font-semibold text-white shadow-sm transition-colors hover:bg-blue-800 active:scale-[0.99]"
             >
               {t.join.continueButton}
             </button>
@@ -126,15 +126,15 @@ function StatusMessage({
   lang?: string;
 }) {
   return (
-    <div className="flex flex-col gap-3 text-center mt-4">
+    <div className="animate-fade-in-up flex flex-col gap-3 text-center mt-4">
       {session && (
         <div>
-          <h2 className="text-lg font-semibold">{session.courseName}</h2>
+          <h2 className="text-lg font-semibold text-blue-900">{session.courseName}</h2>
           {lang && <DateLine sessionDate={session.sessionDate} lang={lang} className="text-sm" />}
         </div>
       )}
-      <h1 className="text-xl font-bold">{title}</h1>
-      <p className="text-gray-500">{body}</p>
+      <h1 className="text-xl font-bold text-slate-900">{title}</h1>
+      <p className="text-slate-500">{body}</p>
     </div>
   );
 }
@@ -150,5 +150,5 @@ function DateLine({
 }) {
   const formatted = formatDate(sessionDate, lang);
   if (!formatted) return null;
-  return <p className={`text-gray-500 ${className}`.trim()}>{formatted}</p>;
+  return <p className={`text-slate-500 ${className}`.trim()}>{formatted}</p>;
 }

@@ -25,6 +25,8 @@ export interface QuestionInfo {
   questionNumber: string;
   title: string;
   googleFormUrl: string;
+  /** Published-CSV link for this question's Form response Sheet — see src/lib/responses.ts. */
+  responsesCsvUrl: string | null;
 }
 
 /**

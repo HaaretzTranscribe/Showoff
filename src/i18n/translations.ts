@@ -37,6 +37,10 @@ export interface Dictionary {
     loading: string;
     noQuestions: string;
   };
+  present: {
+    refreshNow: string;
+    noData: string;
+  };
   common: {
     loading: string;
     error: string;
@@ -70,6 +74,10 @@ const en: Dictionary = {
     loading: "Loading questions…",
     noQuestions: "No questions configured for this lesson yet.",
   },
+  present: {
+    refreshNow: "Refresh now",
+    noData: "No responses yet.",
+  },
   common: {
     loading: "Loading…",
     error: "Error",
@@ -102,6 +110,10 @@ const he: Dictionary = {
     activeLabel: "פעיל כעת",
     loading: "טוען שאלות…",
     noQuestions: "עדיין לא הוגדרו שאלות למפגש הזה.",
+  },
+  present: {
+    refreshNow: "רענון עכשיו",
+    noData: "עדיין אין תשובות.",
   },
   common: {
     loading: "טוען…",
