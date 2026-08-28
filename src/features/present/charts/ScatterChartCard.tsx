@@ -31,7 +31,7 @@ export function ScatterChartCard({
   height?: number;
 }) {
   return (
-    <ResponsiveContainer width="100%" height={height}>
+    <ResponsiveContainer width="100%" height={height} className="animate-fade-in">
       <ScatterChart margin={{ top: 24, right: 24, bottom: 24, left: 8 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="#dbeafe" />
         <XAxis
@@ -55,7 +55,7 @@ export function ScatterChartCard({
             name={group.name}
             data={group.points}
             fill={group.color}
-            animationDuration={900}
+            isAnimationActive={false}
           />
         ))}
       </ScatterChart>

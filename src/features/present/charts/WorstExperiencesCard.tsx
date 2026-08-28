@@ -1,9 +1,9 @@
 /** Deliberately breaks the site's blue/white theme — black background, big red text, per spec. */
-export function WorstExperiencesCard({ texts }: { texts: string[] }) {
+export function WorstExperiencesCard({ texts, noDataLabel }: { texts: string[]; noDataLabel: string }) {
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-8 bg-black px-8 py-12">
       {texts.length === 0 ? (
-        <p className="text-2xl text-red-500">No responses yet.</p>
+        <p className="text-2xl text-red-500">{noDataLabel}</p>
       ) : (
         texts.map((text, i) => (
           <p

@@ -145,7 +145,7 @@ function VizBody({
         <Empty label={noDataLabel} />
       );
     case "11":
-      return <WorstExperiencesCard texts={viz.viz11(table)} />;
+      return <WorstExperiencesCard texts={viz.viz11(table)} noDataLabel={noDataLabel} />;
     default:
       return null;
   }

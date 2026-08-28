@@ -109,6 +109,24 @@ rules, don't assume these generalize — ask again, the same way.
 
 ## Known trade-offs
 
+- **Zero-value bars don't render.** Recharts skips generating any
+  geometry for a bar whose value is exactly 0, so a 0%/0-count result
+  shows as a blank gap with no bar and no label, rather than a visible
+  "0%" bar. Ran into this via `viz3`/`viz5` with sparse test data (a
+  bar-chart animation bug in a different area — see below — led to
+  discovering this one too). Not fixed; revisit if a real class result
+  lands on exactly zero for a category and that reads as "missing
+  data" rather than "zero."
+- **Recharts' built-in bar/scatter animation gets stuck.** `isAnimationActive`
+  was disabled on `Bar` and `Scatter` after testing showed the
+  animated version could render an empty chart — no bar geometry, no
+  value label — seemingly because the `react-smooth` animation state
+  never reached "active." Charts now render instantly (no grow/fade
+  animation on the marks themselves) with a CSS `fade-in` on the whole
+  chart container instead, which is reliable. If revisiting this,
+  test thoroughly with sparse data (1-2 points) before re-enabling —
+  that's what surfaced the bug.
+
 - Same 5-minute-poll trade-off as the rest of Phase 2's realtime
   pieces: not push, not instant.
 - `viz9`'s quartile split is by **response count**, not by fixed time
