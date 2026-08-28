@@ -8,16 +8,16 @@ import type { PublicSessionInfo } from "@/domain/types";
 
 type Phase = "loading" | "not_found" | "not_open" | "closed" | "open";
 
-function formatDate(iso: string, lang: string): string {
-  try {
-    return new Date(iso).toLocaleDateString(lang === "he" ? "he-IL" : "en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  } catch {
-    return iso;
-  }
+/** Returns null for blank/unparseable dates rather than rendering "Invalid Date" — the sheet's session_date is free text, often not filled in yet. */
+function formatDate(raw: string, lang: string): string | null {
+  if (!raw.trim()) return null;
+  const date = new Date(raw);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toLocaleDateString(lang === "he" ? "he-IL" : "en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 }
 
 export function JoinPage() {
@@ -84,7 +84,7 @@ export function JoinPage() {
           <div className="w-full max-w-sm flex flex-col gap-5 mt-2">
             <div className="text-center">
               <h1 className="text-2xl font-bold">{session.courseName}</h1>
-              <p className="text-gray-500">{formatDate(session.sessionDate, lang)}</p>
+              <DateLine sessionDate={session.sessionDate} lang={lang} />
             </div>
 
             <div className="text-center">
@@ -135,11 +135,25 @@ function StatusMessage({
       {session && (
         <div>
           <h2 className="text-lg font-semibold">{session.courseName}</h2>
-          {lang && <p className="text-gray-500 text-sm">{formatDate(session.sessionDate, lang)}</p>}
+          {lang && <DateLine sessionDate={session.sessionDate} lang={lang} className="text-sm" />}
         </div>
       )}
       <h1 className="text-xl font-bold">{title}</h1>
       <p className="text-gray-500">{body}</p>
     </div>
   );
+}
+
+function DateLine({
+  sessionDate,
+  lang,
+  className = "",
+}: {
+  sessionDate: string;
+  lang: string;
+  className?: string;
+}) {
+  const formatted = formatDate(sessionDate, lang);
+  if (!formatted) return null;
+  return <p className={`text-gray-500 ${className}`.trim()}>{formatted}</p>;
 }

@@ -55,9 +55,11 @@ npm test
 
 One spreadsheet, one tab, one row per lesson. See
 [`docs/phase_1_addendum_no_backend.md`](./docs/phase_1_addendum_no_backend.md)
-for the exact column contract, but in short: `session_slug`,
-`course_name`, `session_title`, `session_date`, `attendance_code`,
-`google_form_url`, `status` (`draft` / `open` / `closed`).
+for the exact column contract, but in short: `lesson_number` (the
+`/join/<this>` URL — e.g. `1`.."12" / `1e`.."12e" for parallel he/en
+tracks), `course_name`, `session_title`, `session_date`,
+`attendance_code`, `google_form_url`, `status` (`draft` / `open` /
+`closed`).
 
 To connect it: **File → Share → Publish to web**, pick that sheet,
 format **CSV**, and put the resulting URL in `VITE_SESSIONS_SHEET_CSV_URL`.

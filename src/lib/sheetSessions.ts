@@ -20,7 +20,10 @@ function parseStatus(raw: string): SessionStatus {
 }
 
 function recordToSessionInfo(record: Record<string, string>): PublicSessionInfo | null {
-  const sessionSlug = pick(record, "session_slug", "slug");
+  // lesson_number (e.g. "1".."12" / "1e".."12e" for parallel he/en
+  // tracks) is the primary per-lesson key; session_slug is an optional
+  // override if a row wants a nicer /join URL instead of the number.
+  const sessionSlug = pick(record, "session_slug", "slug") || pick(record, "lesson_number", "lesson", "number");
   if (!sessionSlug) return null;
 
   return {
@@ -36,9 +39,11 @@ function recordToSessionInfo(record: Record<string, string>): PublicSessionInfo 
 
 /**
  * Fetches the published Google Sheet (File -> Share -> Publish to web,
- * as CSV) and finds the row for this session_slug. Every field on the
- * returned row is meant to be public — it's shown to anyone who opens
- * the /join link, the same trust level as the QR code itself.
+ * as CSV) and finds the row matching this /join URL segment — which
+ * is usually a lesson_number ("1".."12" / "1e".."12e"), or an explicit
+ * session_slug if a row has one. Every field on the returned row is
+ * meant to be public — it's shown to anyone who opens the /join link,
+ * the same trust level as the QR code itself.
  *
  * `cache: "no-store"` so an instructor flipping a row to "open" right
  * before class shows up promptly rather than serving a stale fetch

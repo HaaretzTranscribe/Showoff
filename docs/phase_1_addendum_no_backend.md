@@ -41,8 +41,9 @@ browser. There is no server, no auth, no database, no RLS.
   keyed by normalized header name.
 - `src/lib/sheetSessions.ts` — fetches
   `VITE_SESSIONS_SHEET_CSV_URL` with `cache: "no-store"` and finds the
-  row matching a given `session_slug`. This is the entire data layer
-  now: one function, one fetch, no auth.
+  row matching the `/join` URL segment (a `lesson_number` or an
+  explicit `session_slug`). This is the entire data layer now: one
+  function, one fetch, no auth.
 - `PublicSessionInfo` in `src/domain/types.ts` is now the *only*
   domain type in the app.
 
@@ -54,7 +55,8 @@ so "Course Name", "course_name", and "Course-Name" all work the same:
 
 | Column (any of these spellings) | Meaning |
 |---|---|
-| `session_slug` / `slug` | The `/join/<this>` URL segment — must be unique, URL-safe, and is typed by hand |
+| `lesson_number` / `lesson` / `number` | The `/join/<this>` URL segment in the common case — e.g. `1`.."12" and `1e`.."12e" for parallel Hebrew/English tracks. One row per lesson, filled in ahead of the semester. |
+| `session_slug` / `slug` | Optional override: if set, used as the `/join` URL instead of `lesson_number` (for a nicer link on a specific row) |
 | `course_name` / `course` | Shown to the student |
 | `session_title` / `title` / `lesson_title` | Shown to the student |
 | `session_date` / `date` | Shown to the student (any human-readable string is fine — it's not parsed for logic) |
