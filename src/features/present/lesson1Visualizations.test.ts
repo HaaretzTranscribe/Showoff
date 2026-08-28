@@ -132,4 +132,19 @@ describe("viz11 — three worst experiences", () => {
   it("returns an empty array when there are no responses", () => {
     expect(viz11(table([]))).toEqual([]);
   });
+
+  it("excludes a stock no-complaint phrase even when tagged very-negative", () => {
+    const rows = [
+      ["t", "לא מרוצה כלל", "הכל טוב"],
+      ["t", "לא מרוצה כלל", "אני נוסע שעה בפקקים כל יום וזה בלתי נסבל"],
+    ];
+    const result = viz11(table(rows));
+    expect(result).toEqual(["אני נוסע שעה בפקקים כל יום וזה בלתי נסבל"]);
+  });
+
+  it("keeps a short but genuinely negative quote (not filtered by length)", () => {
+    const rows = [["t", "לא מרוצה כלל", "הכל ממש זוועה"]];
+    const result = viz11(table(rows));
+    expect(result).toEqual(["הכל ממש זוועה"]);
+  });
 });

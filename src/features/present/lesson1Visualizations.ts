@@ -207,6 +207,32 @@ function stripTrailingPeriod(text: string): string {
   return text.endsWith(".") ? text.slice(0, -1) : text;
 }
 
+/**
+ * Free-text "experience" answers occasionally contradict the satisfaction
+ * rating on the same row — real respondent data, not a parsing bug (e.g. a
+ * "very dissatisfied" row whose text is just "הכל טוב"). An answer that's
+ * *entirely* a stock "everything's fine" phrase can't be a genuine
+ * worst-experience quote no matter what satisfaction level it's tagged
+ * with, so those are excluded by matching the phrase itself — deliberately
+ * NOT by text length, since a short but genuinely negative quote (e.g.
+ * "הכל ממש זוועה") must still be eligible.
+ */
+const NO_COMPLAINT_PHRASES = new Set([
+  "הכל טוב",
+  "הכל בסדר",
+  "הכל בסדר גמור",
+  "בסדר גמור",
+  "הכל כיף",
+  "הכל מצוין",
+  "הכל אחלה",
+  "הכל נהדר",
+  "אין תלונות",
+]);
+
+function isNoComplaintPhrase(text: string): boolean {
+  return NO_COMPLAINT_PHRASES.has(stripTrailingPeriod(text).trim());
+}
+
 /** Viz 11 — the 3 most recent "very dissatisfied" free-text experiences from Q5. */
 export function viz11(table: ResponseTable): string[] {
   // Rows are in submission order; take from the end (most recent) first.
@@ -218,7 +244,9 @@ export function viz11(table: ResponseTable): string[] {
       if (excluding.has(i)) return;
       const satisfaction = (row[COL.q5.satisfaction] ?? "").trim();
       const experience = (row[COL.q5.experience] ?? "").trim();
-      if (satisfaction === satisfactionValue && experience) out.push(stripTrailingPeriod(experience));
+      if (satisfaction === satisfactionValue && experience && !isNoComplaintPhrase(experience)) {
+        out.push(stripTrailingPeriod(experience));
+      }
     });
     return out;
   }
