@@ -94,7 +94,7 @@ const he: Dictionary = {
     closedBody: "חלון הנוכחות למפגש הזה הסתיים.",
     formInstructions: "הזינו את הפרטים שלכם והקוד שמוצג בכיתה בטופס שמופיע למטה.",
     formMissing: "עדיין לא הוגדר טופס נוכחות למפגש הזה.",
-    continueButton: "המשך לשיעור",
+    continueButton: "נרשמת? בוודאות? אז קדימה לשאלות",
   },
   control: {
     title: "בקרת שאלות",
