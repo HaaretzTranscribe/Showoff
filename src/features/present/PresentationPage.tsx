@@ -36,6 +36,8 @@ const VIZ_META: Record<string, VizMeta> = {
   "12": { questionNumber: "5", title: "שאלה 5 — שלוש החוויות הגרועות ביותר" },
 };
 
+const VIZ_ORDER = Object.keys(VIZ_META).sort((a, b) => Number(a) - Number(b));
+
 export function PresentationPage() {
   const { sessionSlug = "", vizId = "" } = useParams();
   const { t } = useI18n();
@@ -44,6 +46,13 @@ export function PresentationPage() {
   const [notConfigured, setNotConfigured] = useState(false);
 
   const meta = VIZ_META[vizId];
+  const currentIndex = VIZ_ORDER.indexOf(vizId);
+  const prevHref =
+    currentIndex > 0 ? `/present/${sessionSlug}/${VIZ_ORDER[currentIndex - 1]}` : null;
+  const nextHref =
+    currentIndex >= 0 && currentIndex < VIZ_ORDER.length - 1
+      ? `/present/${sessionSlug}/${VIZ_ORDER[currentIndex + 1]}`
+      : null;
 
   const load = useCallback(async () => {
     if (!meta) return;
@@ -72,7 +81,13 @@ export function PresentationPage() {
 
   if (notConfigured) {
     return (
-      <PresentationLayout title={meta.title} lastUpdated={null} onRefresh={load}>
+      <PresentationLayout
+        title={meta.title}
+        lastUpdated={null}
+        onRefresh={load}
+        prevHref={prevHref}
+        nextHref={nextHref}
+      >
         <div className="flex flex-1 items-center justify-center text-slate-400">{t.present.noData}</div>
       </PresentationLayout>
     );
@@ -85,6 +100,8 @@ export function PresentationPage() {
       onRefresh={load}
       dark={vizId === "12"}
       respondentCount={table?.rows.length ?? null}
+      prevHref={prevHref}
+      nextHref={nextHref}
     >
       {!table ? (
         <p className="text-slate-400">{t.common.loading}</p>

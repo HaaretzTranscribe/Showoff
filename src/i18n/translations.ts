@@ -41,6 +41,8 @@ export interface Dictionary {
     refreshNow: string;
     noData: string;
     respondents: string;
+    previous: string;
+    next: string;
   };
   common: {
     loading: string;
@@ -79,6 +81,8 @@ const en: Dictionary = {
     refreshNow: "Refresh now",
     noData: "No responses yet.",
     respondents: "respondents",
+    previous: "◀ Previous",
+    next: "Next ▶",
   },
   common: {
     loading: "Loading…",
@@ -117,6 +121,8 @@ const he: Dictionary = {
     refreshNow: "רענון עכשיו",
     noData: "עדיין אין תשובות.",
     respondents: "משיבים",
+    previous: "◀ הקודם",
+    next: "הבא ▶",
   },
   common: {
     loading: "טוען…",
