@@ -41,11 +41,19 @@ const VIZ_ORDER = Object.keys(VIZ_META).sort((a, b) => Number(a) - Number(b));
 export function PresentationPage() {
   const { sessionSlug = "", vizId = "" } = useParams();
   const { t } = useI18n();
-  const [table, setTable] = useState<ResponseTable | null>(null);
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-  const [notConfigured, setNotConfigured] = useState(false);
+  // Each load is tagged with the session+question it belongs to. Prev/next
+  // navigation keeps this component mounted, so without the tag the new
+  // viz would first render from the previous question's table (wrong
+  // texts on viz 12, a double bar animation elsewhere) until its own
+  // fetch landed.
+  const [loaded, setLoaded] = useState<{ key: string; table: ResponseTable; at: Date } | null>(null);
+  const [notConfiguredKey, setNotConfiguredKey] = useState<string | null>(null);
 
   const meta = VIZ_META[vizId];
+  const dataKey = meta ? `${sessionSlug}/${meta.questionNumber}` : "";
+  const table = loaded?.key === dataKey ? loaded.table : null;
+  const lastUpdated = loaded?.key === dataKey ? loaded.at : null;
+  const notConfigured = notConfiguredKey === dataKey;
   const currentIndex = VIZ_ORDER.indexOf(vizId);
   const prevHref =
     currentIndex > 0 ? `/present/${sessionSlug}/${VIZ_ORDER[currentIndex - 1]}` : null;
@@ -58,13 +66,12 @@ export function PresentationPage() {
     if (!meta) return;
     const question = await getQuestion(sessionSlug, meta.questionNumber);
     if (!question?.responsesCsvUrl) {
-      setNotConfigured(true);
+      setNotConfiguredKey(dataKey);
       return;
     }
     const data = await fetchResponses(question.responsesCsvUrl);
     if (data) {
-      setTable(data);
-      setLastUpdated(new Date());
+      setLoaded({ key: dataKey, table: data, at: new Date() });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionSlug, vizId]);
