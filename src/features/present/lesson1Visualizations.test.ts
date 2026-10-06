@@ -115,15 +115,29 @@ describe("viz11 — scatter groups by satisfaction, excluding time outliers", ()
 });
 
 describe("viz12 — three worst experiences", () => {
-  it("prefers the most recent very-negative responses", () => {
+  it("ranks very-negative responses by severity, not by recency", () => {
     const rows = [
-      ["t", "לא מרוצה כלל", "old bad one"],
+      ["t", "לא מרוצה כלל", "שעה ורבע של צפיפות וחום בכל בוקר, ואם האוטובוס מאחר אני מגיע בעצבים"],
       ["t", "מרוצה מאוד", "irrelevant"],
-      ["t", "לא מרוצה כלל", "recent bad one"],
-      ["t", "לא מרוצה כלל", "most recent bad one"],
+      ["t", "לא מרוצה כלל", "לא נוח"],
+      ["t", "לא מרוצה כלל", "סיוט"],
+      ["t", "לא מרוצה כלל", "יש פקקים לפעמים"],
     ];
     const result = viz12(table(rows));
-    expect(result).toEqual(["most recent bad one", "recent bad one", "old bad one"]);
+    expect(result).toEqual([
+      "שעה ורבע של צפיפות וחום בכל בוקר, ואם האוטובוס מאחר אני מגיע בעצבים",
+      "סיוט",
+      "יש פקקים לפעמים",
+    ]);
+  });
+
+  it("never lets a less-dissatisfied answer outrank a very-negative one", () => {
+    const rows = [
+      ["t", "לא כל כך מרוצה", "ארוך מאוד ומפורט מאוד עם סיוט וזוועה וצפיפות ועצבים ואיחורים כל יום"],
+      ["t", "לא מרוצה כלל", "רע"],
+    ];
+    const result = viz12(table(rows));
+    expect(result[0]).toBe("רע");
   });
 
   it("falls back to the next-worst level when fewer than 3 very-negative exist", () => {
@@ -141,7 +155,7 @@ describe("viz12 — three worst experiences", () => {
       ["t", "לא מרוצה כלל", "למה זה קורה?"],
     ];
     const result = viz12(table(rows));
-    expect(result).toEqual(["למה זה קורה?", "היה נורא"]);
+    expect(result).toEqual(["היה נורא", "למה זה קורה?"]);
   });
 
   it("returns an empty array when there are no responses", () => {
@@ -161,5 +175,36 @@ describe("viz12 — three worst experiences", () => {
     const rows = [["t", "לא מרוצה כלל", "הכל ממש זוועה"]];
     const result = viz12(table(rows));
     expect(result).toEqual(["הכל ממש זוועה"]);
+  });
+});
+
+describe("English lesson (lang = en)", () => {
+  it("viz3 groups the English satisfaction options with English labels", () => {
+    const rows = [
+      ["t", "Very satisfied"],
+      ["t", "Somewhat satisfied"],
+      ["t", "Not very satisfied"],
+      ["t", "Not satisfied at all"],
+    ];
+    expect(viz3(table(rows), "en")).toEqual([
+      { label: "Satisfied to some degree", value: 75, color: "#1d4ed8" },
+      { label: "Not satisfied at all", value: 25, color: "#dc2626" },
+    ]);
+  });
+
+  it("viz6 counts English negative answers as dissatisfied", () => {
+    const rows = [
+      ["t", "Not satisfied at all", "By bus"],
+      ["t", "Very satisfied", "By bus"],
+    ];
+    expect(viz6(table(rows), "en")).toEqual([{ label: "By bus", value: 50 }]);
+  });
+
+  it("viz12 picks English worst experiences and skips stock no-complaint answers", () => {
+    const rows = [
+      ["t", "Not satisfied at all", "The bus never comes on time."],
+      ["t", "Not satisfied at all", "All good"],
+    ];
+    expect(viz12(table(rows), "en")).toEqual(["The bus never comes on time"]);
   });
 });

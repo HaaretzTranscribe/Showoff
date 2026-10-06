@@ -10,6 +10,7 @@
 export function TransportIcon({ method }: { method: string }) {
   switch (method) {
     case "באוטובוס": // bus
+    case "By bus":
       return (
         <g>
           <rect x={-5} y={-4} width={10} height={6} rx={1.5} fill="white" />
@@ -18,6 +19,7 @@ export function TransportIcon({ method }: { method: string }) {
         </g>
       );
     case "במכונית פרטית": // private car
+    case "By private car":
       return (
         <g>
           <path d="M -5 1 L -3.5 -2 L 3.5 -2 L 5 1 Z" fill="white" />
@@ -27,6 +29,7 @@ export function TransportIcon({ method }: { method: string }) {
         </g>
       );
     case "ברגל": // on foot
+    case "On foot":
       return (
         <g stroke="white" strokeWidth={1.2} strokeLinecap="round" fill="none">
           <circle cx={0} cy={-3.3} r={1.3} fill="white" stroke="none" />
@@ -38,6 +41,7 @@ export function TransportIcon({ method }: { method: string }) {
         </g>
       );
     case "באופניים": // bicycle
+    case "By bicycle":
       return (
         <g stroke="white" strokeWidth={1} strokeLinecap="round" fill="none">
           <circle cx={-3} cy={2.6} r={2.1} />
@@ -48,6 +52,7 @@ export function TransportIcon({ method }: { method: string }) {
         </g>
       );
     case "באופניים חשמליים/קורקינט חשמלי": // e-bike / e-scooter
+    case "By e-bike/e-scooter":
       return (
         <g stroke="white" strokeWidth={1.2} strokeLinecap="round">
           <line x1={-3} y1={-4} x2={-3} y2={1.5} />
@@ -57,7 +62,7 @@ export function TransportIcon({ method }: { method: string }) {
           <circle cx={3.5} cy={3} r={1} fill="white" stroke="none" />
         </g>
       );
-    default: // "אחר" (other) and anything unrecognized
+    default: // "אחר" / "Other" and anything unrecognized
       return (
         <text x={0} y={2.5} textAnchor="middle" fill="white" fontSize={8} fontWeight={700}>
           ?

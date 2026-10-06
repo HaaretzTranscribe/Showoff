@@ -3,6 +3,8 @@ import { useParams } from "react-router-dom";
 import { getQuestion } from "@/lib/questions";
 import { fetchResponses, type ResponseTable } from "@/lib/responses";
 import { useI18n } from "@/i18n/I18nProvider";
+import { lessonLanguage } from "@/i18n/lessonLanguage";
+import type { Language } from "@/i18n/translations";
 import { PresentationLayout } from "./PresentationLayout";
 import { BarChartCard } from "./charts/BarChartCard";
 import { BigNumberCard } from "./charts/BigNumberCard";
@@ -14,7 +16,7 @@ const REFRESH_INTERVAL_MS = 5 * 60 * 1000;
 
 interface VizMeta {
   questionNumber: string;
-  title: string;
+  title: Record<Language, string>;
 }
 
 // Bespoke per lesson, per the pedagogical plan for lesson 1 — see
@@ -22,18 +24,54 @@ interface VizMeta {
 // own registry as their visualization needs become concrete; this is
 // deliberately not a generic sheet-driven engine.
 const VIZ_META: Record<string, VizMeta> = {
-  "1": { questionNumber: "1", title: "שאלה 1 — האם מרוצה?" },
-  "2": { questionNumber: "2", title: "שאלה 2 — מידת שביעות רצון" },
-  "3": { questionNumber: "2", title: "שאלה 2 — מרוצים ברמה כלשהי מול לא מרוצים כלל" },
-  "4": { questionNumber: "2", title: "שאלה 2 — מרוצים מאוד מול לא מרוצים ברמה כלשהי" },
-  "5": { questionNumber: "3", title: "שאלה 3 — איך מגיעים" },
-  "6": { questionNumber: "3", title: "שאלה 3 — % לא מרוצים לפי אמצעי הגעה" },
-  "7": { questionNumber: "4", title: "שאלה 4 — עלות חודשית ממוצעת" },
-  "8": { questionNumber: "4", title: "שאלה 4 — עלות חודשית חציונית" },
-  "9": { questionNumber: "4", title: "שאלה 4 — זמן הגעה חציוני" },
-  "10": { questionNumber: "4", title: "שאלה 4 — % לא מרוצים לפי רבעון זמן" },
-  "11": { questionNumber: "4", title: "שאלה 4 — זמן מול עלות" },
-  "12": { questionNumber: "5", title: "שאלה 5 — שלוש החוויות הגרועות ביותר" },
+  "1": {
+    questionNumber: "1",
+    title: { he: "שאלה 1 — האם מרוצה?", en: "Question 1 — Are you satisfied?" },
+  },
+  "2": {
+    questionNumber: "2",
+    title: { he: "שאלה 2 — מידת שביעות רצון", en: "Question 2 — Level of satisfaction" },
+  },
+  "3": {
+    questionNumber: "2",
+    title: { he: "שאלה 2 — מרוצים ברמה כלשהי מול לא מרוצים כלל", en: "Question 2 — Satisfied to some degree vs. not satisfied at all" },
+  },
+  "4": {
+    questionNumber: "2",
+    title: { he: "שאלה 2 — מרוצים מאוד מול לא מרוצים ברמה כלשהי", en: "Question 2 — Very satisfied vs. not satisfied to some degree" },
+  },
+  "5": {
+    questionNumber: "3",
+    title: { he: "שאלה 3 — איך מגיעים", en: "Question 3 — How you get here" },
+  },
+  "6": {
+    questionNumber: "3",
+    title: { he: "שאלה 3 — % לא מרוצים לפי אמצעי הגעה", en: "Question 3 — % dissatisfied by mode of transport" },
+  },
+  "7": {
+    questionNumber: "4",
+    title: { he: "שאלה 4 — עלות חודשית ממוצעת", en: "Question 4 — Average monthly cost" },
+  },
+  "8": {
+    questionNumber: "4",
+    title: { he: "שאלה 4 — עלות חודשית חציונית", en: "Question 4 — Median monthly cost" },
+  },
+  "9": {
+    questionNumber: "4",
+    title: { he: "שאלה 4 — זמן הגעה חציוני", en: "Question 4 — Median commute time" },
+  },
+  "10": {
+    questionNumber: "4",
+    title: { he: "שאלה 4 — % לא מרוצים לפי רבעון זמן", en: "Question 4 — % dissatisfied by commute-time quartile" },
+  },
+  "11": {
+    questionNumber: "4",
+    title: { he: "שאלה 4 — זמן מול עלות", en: "Question 4 — Time vs. cost" },
+  },
+  "12": {
+    questionNumber: "5",
+    title: { he: "שאלה 5 — שלוש החוויות הגרועות ביותר", en: "Question 5 — The three worst experiences" },
+  },
 };
 
 const VIZ_ORDER = Object.keys(VIZ_META).sort((a, b) => Number(a) - Number(b));
@@ -50,6 +88,7 @@ export function PresentationPage() {
   const [notConfiguredKey, setNotConfiguredKey] = useState<string | null>(null);
 
   const meta = VIZ_META[vizId];
+  const lang = lessonLanguage(sessionSlug);
   const dataKey = meta ? `${sessionSlug}/${meta.questionNumber}` : "";
   const table = loaded?.key === dataKey ? loaded.table : null;
   const lastUpdated = loaded?.key === dataKey ? loaded.at : null;
@@ -89,7 +128,7 @@ export function PresentationPage() {
   if (notConfigured) {
     return (
       <PresentationLayout
-        title={meta.title}
+        title={meta.title[lang]}
         lastUpdated={null}
         onRefresh={load}
         prevHref={prevHref}
@@ -102,7 +141,7 @@ export function PresentationPage() {
 
   return (
     <PresentationLayout
-      title={meta.title}
+      title={meta.title[lang]}
       lastUpdated={lastUpdated}
       onRefresh={load}
       dark={vizId === "12"}
@@ -113,7 +152,7 @@ export function PresentationPage() {
       {!table ? (
         <p className="text-slate-400">{t.common.loading}</p>
       ) : (
-        <VizBody vizId={vizId} table={table} noDataLabel={t.present.noData} />
+        <VizBody vizId={vizId} table={table} lang={lang} noDataLabel={t.present.noData} />
       )}
     </PresentationLayout>
   );
@@ -122,13 +161,16 @@ export function PresentationPage() {
 function VizBody({
   vizId,
   table,
+  lang,
   noDataLabel,
 }: {
   vizId: string;
   table: ResponseTable;
+  lang: Language;
   noDataLabel: string;
 }) {
   const hasData = table.rows.length > 0;
+  const minutes = lang === "en" ? "min" : "דקות";
 
   switch (vizId) {
     case "1":
@@ -139,19 +181,19 @@ function VizBody({
       );
     case "2":
       return hasData ? (
-        <BarChartCard data={viz.viz2(table)} valueSuffix="%" />
+        <BarChartCard data={viz.viz2(table, lang)} valueSuffix="%" />
       ) : (
         <Empty label={noDataLabel} />
       );
     case "3":
       return hasData ? (
-        <BarChartCard data={viz.viz3(table)} valueSuffix="%" />
+        <BarChartCard data={viz.viz3(table, lang)} valueSuffix="%" />
       ) : (
         <Empty label={noDataLabel} />
       );
     case "4":
       return hasData ? (
-        <BarChartCard data={viz.viz4(table)} valueSuffix="%" />
+        <BarChartCard data={viz.viz4(table, lang)} valueSuffix="%" />
       ) : (
         <Empty label={noDataLabel} />
       );
@@ -163,7 +205,7 @@ function VizBody({
       );
     case "6":
       return hasData ? (
-        <BarChartCard data={viz.viz6(table)} valueSuffix="%" />
+        <BarChartCard data={viz.viz6(table, lang)} valueSuffix="%" />
       ) : (
         <Empty label={noDataLabel} />
       );
@@ -181,24 +223,28 @@ function VizBody({
       );
     case "9":
       return hasData ? (
-        <BigNumberCard value={viz.viz9(table)} suffix="דקות" decimals={0} />
+        <BigNumberCard value={viz.viz9(table)} suffix={minutes} decimals={0} />
       ) : (
         <Empty label={noDataLabel} />
       );
     case "10":
       return hasData ? (
-        <BarChartCard data={viz.viz10(table)} valueSuffix="%" />
+        <BarChartCard data={viz.viz10(table, lang)} valueSuffix="%" />
       ) : (
         <Empty label={noDataLabel} />
       );
     case "11":
       return hasData ? (
-        <ScatterChartCard groups={viz.viz11(table)} xLabel="זמן הגעה (דקות)" yLabel="עלות חודשית (₪)" />
+        <ScatterChartCard
+          groups={viz.viz11(table, lang)}
+          xLabel={lang === "en" ? "Commute time (min)" : "זמן הגעה (דקות)"}
+          yLabel={lang === "en" ? "Monthly cost (₪)" : "עלות חודשית (₪)"}
+        />
       ) : (
         <Empty label={noDataLabel} />
       );
     case "12":
-      return <WorstExperiencesCard texts={viz.viz12(table)} noDataLabel={noDataLabel} />;
+      return <WorstExperiencesCard texts={viz.viz12(table, lang)} noDataLabel={noDataLabel} />;
     default:
       return null;
   }

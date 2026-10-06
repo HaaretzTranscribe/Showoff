@@ -56,7 +56,7 @@ export function InstructorControlPage() {
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white text-slate-900">
       <div className="flex items-center justify-between border-b border-blue-100 bg-white/80 p-4 backdrop-blur">
         <span className="font-semibold text-blue-900">{t.control.title}</span>
-        <LanguageSwitcher />
+        <LanguageSwitcher switchesLesson />
       </div>
 
       <div className="animate-fade-in-up max-w-md mx-auto p-4 flex flex-col gap-3">

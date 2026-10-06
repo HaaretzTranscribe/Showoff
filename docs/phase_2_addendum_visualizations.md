@@ -28,7 +28,7 @@ The 12 visualizations for lesson 1 were specified individually, each
 with its own aggregation logic (collapsing 4-point scales to
 positive/negative, cross-referencing satisfaction against transport
 method, quartile-bucketing a numeric field, a 3-way color-coded
-scatter, a "3 worst, most-recent-first with fallback" text selector).
+scatter, a "3 harshest, severity-ranked with fallback" text selector).
 Trying to make all of that declaratively configurable from a
 spreadsheet would be a large, premature investment for content that's
 explicitly expected to differ every lesson. Instead:
@@ -102,7 +102,7 @@ crashing on stray text.
 | 9 | Q4 | Big number | Median commute time |
 | 10 | Q4 | Bar (%) | Split respondents into 4 equal-sized groups by commute time (fastest→slowest quartile), % in bottom 2 satisfaction levels per group |
 | 11 | Q4 | Scatter | x = time, y = cost; blue = "very satisfied" only, red = "not satisfied at all" only, purple = **both** middle levels |
-| 12 | Q5 | Black screen, red text | 3 most recent free-text responses among "not satisfied at all"; if fewer than 3 exist, fills remaining slots from "not so satisfied," most recent first. "Most recent" = last rows in the CSV (Forms appends new responses at the bottom) — timestamps are not parsed. Excludes responses whose free text is *entirely* a stock "everything's fine" phrase (see below) even if tagged "not satisfied at all" |
+| 12 | Q5 | Black screen, red text | The 3 harshest free-text responses among "not satisfied at all"; if fewer than 3 exist, fills remaining slots from "not so satisfied." Within each level, answers are ranked by `severity()` in `lesson1Visualizations.ts` — answer length plus a bonus per harsh word stem (Hebrew and English) — most recent first on a tie. Computed locally, so it's instant; no LLM call. Excludes responses whose free text is *entirely* a stock "everything's fine" phrase (see below) even if tagged "not satisfied at all" |
 
 All of these were confirmed against the instructor in chat before
 building (#3/#4 replaced an earlier, symmetric 2-vs-2 viz3 per later

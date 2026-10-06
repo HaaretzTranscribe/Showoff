@@ -76,7 +76,7 @@ export function PresentationLayout({
           ) : (
             <span className={navDisabledClass}>{t.present.next}</span>
           )}
-          <LanguageSwitcher />
+          <LanguageSwitcher switchesLesson />
         </div>
       </div>
       <div className="flex flex-1 flex-col overflow-auto px-6 py-6">

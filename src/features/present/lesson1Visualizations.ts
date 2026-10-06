@@ -1,4 +1,5 @@
 import { parseLenientNumber, type ResponseTable } from "@/lib/responses";
+import type { Language } from "@/i18n/translations";
 import type { BarDatum } from "./charts/BarChartCard";
 import type { ScatterGroup } from "./charts/ScatterChartCard";
 
@@ -13,10 +14,81 @@ const COL = {
   q5: { satisfaction: 1, experience: 2, method: 3, cost: 4, time: 5 },
 };
 
-const POSITIVE = ["מרוצה מאוד", "מרוצה חלקית"];
-const NEGATIVE = ["לא כל כך מרוצה", "לא מרוצה כלל"];
-const VERY_POSITIVE = "מרוצה מאוד";
-const VERY_NEGATIVE = "לא מרוצה כלל";
+/**
+ * Per-language answer texts and chart labels. The English lesson (lesson
+ * key ending in "en", see lessonLanguage) runs the same Forms translated,
+ * so its Form options must match the `en` satisfaction strings exactly —
+ * the Hebrew ones are the original lesson-1 Form options.
+ */
+interface LessonText {
+  /** Satisfaction scale, most pleased first: very / somewhat / not very / not at all. */
+  satisfaction: [string, string, string, string];
+  pleasedSomehow: string;
+  notPleasedAtAll: string;
+  veryPleased: string;
+  notPleasedSomehow: string;
+  mixed: string;
+  minutes: string;
+  quartile: string;
+  noComplaintPhrases: string[];
+}
+
+const TEXT: Record<Language, LessonText> = {
+  he: {
+    satisfaction: ["מרוצה מאוד", "מרוצה חלקית", "לא כל כך מרוצה", "לא מרוצה כלל"],
+    pleasedSomehow: "מרוצים ברמה כלשהי",
+    notPleasedAtAll: "לא מרוצים כלל",
+    veryPleased: "מרוצים מאוד",
+    notPleasedSomehow: "לא מרוצים ברמה כלשהי",
+    mixed: "מרוצה חלקית / לא כל כך מרוצה",
+    minutes: "דקות",
+    quartile: "רבעון",
+    noComplaintPhrases: [
+      "הכל טוב",
+      "הכל בסדר",
+      "הכל בסדר גמור",
+      "בסדר גמור",
+      "הכל כיף",
+      "הכל מצוין",
+      "הכל אחלה",
+      "הכל נהדר",
+      "אין תלונות",
+    ],
+  },
+  en: {
+    satisfaction: ["Very satisfied", "Somewhat satisfied", "Not very satisfied", "Not satisfied at all"],
+    pleasedSomehow: "Satisfied to some degree",
+    notPleasedAtAll: "Not satisfied at all",
+    veryPleased: "Very satisfied",
+    notPleasedSomehow: "Not satisfied to some degree",
+    mixed: "Somewhat / not very satisfied",
+    minutes: "min",
+    quartile: "Quartile",
+    noComplaintPhrases: [
+      "all good",
+      "everything is good",
+      "everything is fine",
+      "everything's fine",
+      "all fine",
+      "fine",
+      "no complaints",
+      "none",
+      "nothing",
+    ],
+  },
+};
+
+function levels(lang: Language) {
+  const [veryPositive, somewhatPositive, somewhatNegative, veryNegative] = TEXT[lang].satisfaction;
+  return {
+    veryPositive,
+    somewhatPositive,
+    somewhatNegative,
+    veryNegative,
+    positive: [veryPositive, somewhatPositive],
+    negative: [somewhatNegative, veryNegative],
+  };
+}
 
 const BLUE = "#1d4ed8";
 const RED = "#dc2626";
@@ -60,8 +132,9 @@ export function viz1(table: ResponseTable): BarDatum[] {
 }
 
 /** Viz 2 — bar chart, Q2's 4-point satisfaction scale as % of respondents. */
-export function viz2(table: ResponseTable): BarDatum[] {
-  return toPercentBarData(countBy(table.rows, COL.q2.satisfaction), [...POSITIVE, ...NEGATIVE]);
+export function viz2(table: ResponseTable, lang: Language = "he"): BarDatum[] {
+  const { positive, negative } = levels(lang);
+  return toPercentBarData(countBy(table.rows, COL.q2.satisfaction), [...positive, ...negative]);
 }
 
 /**
@@ -72,17 +145,18 @@ export function viz2(table: ResponseTable): BarDatum[] {
  * how the same underlying data tells a different story depending on
  * which categories get lumped together.
  */
-export function viz3(table: ResponseTable): BarDatum[] {
+export function viz3(table: ResponseTable, lang: Language = "he"): BarDatum[] {
+  const l = levels(lang);
   const counts = countBy(table.rows, COL.q2.satisfaction);
   const total = Array.from(counts.values()).reduce((sum, v) => sum + v, 0);
-  const pleased = [VERY_POSITIVE, "מרוצה חלקית", "לא כל כך מרוצה"].reduce(
+  const pleased = [l.veryPositive, l.somewhatPositive, l.somewhatNegative].reduce(
     (sum, k) => sum + (counts.get(k) ?? 0),
     0
   );
-  const veryDispleased = counts.get(VERY_NEGATIVE) ?? 0;
+  const veryDispleased = counts.get(l.veryNegative) ?? 0;
   return [
-    { label: "מרוצים ברמה כלשהי", value: total > 0 ? Math.round((pleased / total) * 100) : 0, color: BLUE },
-    { label: "לא מרוצים כלל", value: total > 0 ? Math.round((veryDispleased / total) * 100) : 0, color: RED },
+    { label: TEXT[lang].pleasedSomehow, value: total > 0 ? Math.round((pleased / total) * 100) : 0, color: BLUE },
+    { label: TEXT[lang].notPleasedAtAll, value: total > 0 ? Math.round((veryDispleased / total) * 100) : 0, color: RED },
   ];
 }
 
@@ -90,17 +164,18 @@ export function viz3(table: ResponseTable): BarDatum[] {
  * Viz 4 — mirror image of viz3: the 3 most-displeased levels (grouped)
  * vs the single most-pleased level standing alone, as % of respondents.
  */
-export function viz4(table: ResponseTable): BarDatum[] {
+export function viz4(table: ResponseTable, lang: Language = "he"): BarDatum[] {
+  const l = levels(lang);
   const counts = countBy(table.rows, COL.q2.satisfaction);
   const total = Array.from(counts.values()).reduce((sum, v) => sum + v, 0);
-  const veryPleased = counts.get(VERY_POSITIVE) ?? 0;
-  const displeased = ["מרוצה חלקית", "לא כל כך מרוצה", VERY_NEGATIVE].reduce(
+  const veryPleased = counts.get(l.veryPositive) ?? 0;
+  const displeased = [l.somewhatPositive, l.somewhatNegative, l.veryNegative].reduce(
     (sum, k) => sum + (counts.get(k) ?? 0),
     0
   );
   return [
-    { label: "מרוצים מאוד", value: total > 0 ? Math.round((veryPleased / total) * 100) : 0, color: BLUE },
-    { label: "לא מרוצים ברמה כלשהי", value: total > 0 ? Math.round((displeased / total) * 100) : 0, color: RED },
+    { label: TEXT[lang].veryPleased, value: total > 0 ? Math.round((veryPleased / total) * 100) : 0, color: BLUE },
+    { label: TEXT[lang].notPleasedSomehow, value: total > 0 ? Math.round((displeased / total) * 100) : 0, color: RED },
   ];
 }
 
@@ -110,7 +185,8 @@ export function viz5(table: ResponseTable): BarDatum[] {
 }
 
 /** Viz 6 — % dissatisfied per transportation method, from Q3. */
-export function viz6(table: ResponseTable): BarDatum[] {
+export function viz6(table: ResponseTable, lang: Language = "he"): BarDatum[] {
+  const { negative: NEGATIVE } = levels(lang);
   const byMethod = new Map<string, { total: number; negative: number }>();
   for (const row of table.rows) {
     const method = (row[COL.q3.method] ?? "").trim();
@@ -163,7 +239,9 @@ export function viz9(table: ResponseTable): number {
 }
 
 /** Viz 10 — % dissatisfied per quartile of commute time, from Q4. */
-export function viz10(table: ResponseTable): BarDatum[] {
+export function viz10(table: ResponseTable, lang: Language = "he"): BarDatum[] {
+  const { negative: NEGATIVE } = levels(lang);
+  const { minutes, quartile } = TEXT[lang];
   const rows = costTimeRows(table).filter((r) => r.time !== null) as {
     satisfaction: string;
     time: number;
@@ -182,10 +260,10 @@ export function viz10(table: ResponseTable): BarDatum[] {
     const times = slice.map((r) => r.time);
     const rangeLabel =
       Math.min(...times) === Math.max(...times)
-        ? `${Math.min(...times)} דקות`
-        : `${Math.min(...times)}-${Math.max(...times)} דקות`;
+        ? `${Math.min(...times)} ${minutes}`
+        : `${Math.min(...times)}-${Math.max(...times)} ${minutes}`;
     buckets.push({
-      label: `רבעון ${i + 1} (${rangeLabel})`,
+      label: `${quartile} ${i + 1} (${rangeLabel})`,
       value: Math.round((negative / slice.length) * 100),
     });
   }
@@ -200,7 +278,8 @@ export function viz10(table: ResponseTable): BarDatum[] {
  * and lowest number." If cost outliers should be excluded too/instead,
  * that needs a follow-up spec.
  */
-export function viz11(table: ResponseTable): ScatterGroup[] {
+export function viz11(table: ResponseTable, lang: Language = "he"): ScatterGroup[] {
+  const l = levels(lang);
   const allRows = costTimeRows(table).filter((r) => r.time !== null && r.cost !== null) as {
     satisfaction: string;
     method: string;
@@ -215,15 +294,15 @@ export function viz11(table: ResponseTable): ScatterGroup[] {
     allRows.length > 2 ? allRows.filter((r) => r.time !== minTime && r.time !== maxTime) : allRows;
 
   const groups: Record<"pleased" | "mixed" | "unpleased", ScatterGroup> = {
-    pleased: { name: "מרוצה מאוד", color: BLUE, points: [] },
-    mixed: { name: "מרוצה חלקית / לא כל כך מרוצה", color: PURPLE, points: [] },
-    unpleased: { name: "לא מרוצה כלל", color: RED, points: [] },
+    pleased: { name: l.veryPositive, color: BLUE, points: [] },
+    mixed: { name: TEXT[lang].mixed, color: PURPLE, points: [] },
+    unpleased: { name: l.veryNegative, color: RED, points: [] },
   };
 
   for (const row of rows) {
     const point = { x: row.time, y: row.cost, method: row.method || undefined };
-    if (row.satisfaction === VERY_POSITIVE) groups.pleased.points.push(point);
-    else if (row.satisfaction === VERY_NEGATIVE) groups.unpleased.points.push(point);
+    if (row.satisfaction === l.veryPositive) groups.pleased.points.push(point);
+    else if (row.satisfaction === l.veryNegative) groups.unpleased.points.push(point);
     else groups.mixed.points.push(point);
   }
 
@@ -243,52 +322,60 @@ function stripTrailingPeriod(text: string): string {
  * worst-experience quote no matter what satisfaction level it's tagged
  * with, so those are excluded by matching the phrase itself — deliberately
  * NOT by text length, since a short but genuinely negative quote (e.g.
- * "הכל ממש זוועה") must still be eligible.
+ * "הכל ממש זוועה") must still be eligible. The phrase lists live in TEXT;
+ * matching is case-insensitive for the English ones.
  */
-const NO_COMPLAINT_PHRASES = new Set([
-  "הכל טוב",
-  "הכל בסדר",
-  "הכל בסדר גמור",
-  "בסדר גמור",
-  "הכל כיף",
-  "הכל מצוין",
-  "הכל אחלה",
-  "הכל נהדר",
-  "אין תלונות",
-]);
-
-function isNoComplaintPhrase(text: string): boolean {
-  return NO_COMPLAINT_PHRASES.has(stripTrailingPeriod(text).trim());
+function isNoComplaintPhrase(text: string, lang: Language): boolean {
+  const normalized = stripTrailingPeriod(text).trim().toLowerCase();
+  return TEXT[lang].noComplaintPhrases.includes(normalized);
 }
 
-/** Viz 12 — the 3 most recent "very dissatisfied" free-text experiences from Q5. */
-export function viz12(table: ResponseTable): string[] {
-  // Rows are in submission order; take from the end (most recent) first.
+/**
+ * Word stems that mark a vivid, harsh complaint. Matched as substrings
+ * (so Hebrew prefixes/suffixes and English inflections still hit); each
+ * distinct stem found adds INTENSITY_BONUS to the answer's severity.
+ */
+const INTENSITY_STEMS = [
+  // Hebrew
+  "סיוט", "זוועה", "זוועתי", "נורא", "איום", "גיהנום", "גהנום", "עצבים", "עצבני", "תסכול",
+  "מתסכל", "צפיפות", "צפוף", "דחוס", "מחנק", "חנוק", "מסוכן", "מפחיד", "פחד", "בכי", "בוכה",
+  "נתקע", "תקוע", "איחור", "מאחר", "שעתיים", "חום", "מזיע", "ריח", "השפלה", "מושפל", "גרוע",
+  "בלתי נסבל", "מתיש", "מותש", "לחץ",
+  // English
+  "nightmare", "horrible", "horrific", "terrible", "awful", "hell", "unbearable", "furious",
+  "angry", "frustrat", "crowded", "packed", "suffocat", "dangerous", "scary", "scared", "afraid",
+  "cry", "crying", "stuck", "late", "hours", "sweat", "smell", "humiliat", "worst", "exhaust",
+  "stress",
+];
+const INTENSITY_BONUS = 40;
+
+/** Higher = harsher: longer, more detailed answers plus a bonus per harsh word stem. */
+function severity(text: string): number {
+  const lower = text.toLowerCase();
+  const hits = INTENSITY_STEMS.filter((stem) => lower.includes(stem)).length;
+  return text.length + hits * INTENSITY_BONUS;
+}
+
+/**
+ * Viz 12 — the 3 harshest free-text experiences from Q5. "Not satisfied
+ * at all" answers always come first, falling back to "not very
+ * satisfied" if fewer than 3 exist; within each level, answers are ranked
+ * by severity() (most recent first on a tie). Computed locally from the
+ * table, so it's instant and stable across refreshes.
+ */
+export function viz12(table: ResponseTable, lang: Language = "he"): string[] {
+  const { veryNegative, somewhatNegative } = levels(lang);
+  // Rows are in submission order; reversing makes the stable sort's
+  // tie-break favor the most recent answer.
   const reversed = [...table.rows].reverse();
 
-  function textsWith(satisfactionValue: string, excluding: Set<number>): string[] {
-    const out: string[] = [];
-    reversed.forEach((row, i) => {
-      if (excluding.has(i)) return;
-      const satisfaction = (row[COL.q5.satisfaction] ?? "").trim();
-      const experience = (row[COL.q5.experience] ?? "").trim();
-      if (satisfaction === satisfactionValue && experience && !isNoComplaintPhrase(experience)) {
-        out.push(stripTrailingPeriod(experience));
-      }
-    });
-    return out;
+  function harshestWith(satisfactionValue: string): string[] {
+    return reversed
+      .filter((row) => (row[COL.q5.satisfaction] ?? "").trim() === satisfactionValue)
+      .map((row) => stripTrailingPeriod((row[COL.q5.experience] ?? "").trim()))
+      .filter((text) => text && !isNoComplaintPhrase(text, lang))
+      .sort((a, b) => severity(b) - severity(a));
   }
 
-  const worst = textsWith(VERY_NEGATIVE, new Set());
-  if (worst.length >= 3) return worst.slice(0, 3);
-
-  const usedIndices = new Set(
-    reversed.reduce<number[]>((acc, row, i) => {
-      if ((row[COL.q5.satisfaction] ?? "").trim() === VERY_NEGATIVE) acc.push(i);
-      return acc;
-    }, [])
-  );
-  const nextWorst = textsWith("לא כל כך מרוצה", usedIndices);
-
-  return [...worst, ...nextWorst].slice(0, 3);
+  return [...harshestWith(veryNegative), ...harshestWith(somewhatNegative)].slice(0, 3);
 }
