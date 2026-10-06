@@ -76,24 +76,29 @@ const VIZ_META: Record<string, VizMeta> = {
 };
 
 const VIZ_ORDER = Object.keys(VIZ_META).sort((a, b) => Number(a) - Number(b));
+const QUESTION_NUMBERS = Array.from(new Set(Object.values(VIZ_META).map((m) => m.questionNumber)));
+
+interface LoadedTable {
+  table: ResponseTable;
+  at: Date;
+}
 
 export function PresentationPage() {
   const { sessionSlug = "", vizId = "" } = useParams();
   const { t } = useI18n();
-  // Each load is tagged with the session+question it belongs to. Prev/next
-  // navigation keeps this component mounted, so without the tag the new
-  // viz would first render from the previous question's table (wrong
-  // texts on viz 12, a double bar animation elsewhere) until its own
-  // fetch landed.
-  const [loaded, setLoaded] = useState<{ key: string; table: ResponseTable; at: Date } | null>(null);
-  const [notConfiguredKey, setNotConfiguredKey] = useState<string | null>(null);
+  // Tables cached per session+question. Prev/next navigation keeps this
+  // component mounted; keying by question means a viz never renders from
+  // another question's table, and all questions are fetched up front so
+  // moving between slides doesn't wait on the network.
+  const [tables, setTables] = useState<Record<string, LoadedTable>>({});
+  const [notConfiguredKeys, setNotConfiguredKeys] = useState<Set<string>>(() => new Set());
 
   const meta = VIZ_META[vizId];
   const lang = lessonLanguage(sessionSlug);
   const dataKey = meta ? `${sessionSlug}/${meta.questionNumber}` : "";
-  const table = loaded?.key === dataKey ? loaded.table : null;
-  const lastUpdated = loaded?.key === dataKey ? loaded.at : null;
-  const notConfigured = notConfiguredKey === dataKey;
+  const table = tables[dataKey]?.table ?? null;
+  const lastUpdated = tables[dataKey]?.at ?? null;
+  const notConfigured = notConfiguredKeys.has(dataKey);
   const currentIndex = VIZ_ORDER.indexOf(vizId);
   const prevHref =
     currentIndex > 0 ? `/present/${sessionSlug}/${VIZ_ORDER[currentIndex - 1]}` : null;
@@ -102,27 +107,39 @@ export function PresentationPage() {
       ? `/present/${sessionSlug}/${VIZ_ORDER[currentIndex + 1]}`
       : null;
 
-  const load = useCallback(async () => {
-    if (!meta) return;
-    const data = await fetchResponses(sessionSlug, meta.questionNumber);
-    if (data === "not_configured") {
-      setNotConfiguredKey(dataKey);
-      return;
-    }
-    if (data) {
+  const loadQuestion = useCallback(
+    async (questionNumber: string) => {
+      const key = `${sessionSlug}/${questionNumber}`;
+      const data = await fetchResponses(sessionSlug, questionNumber);
+      if (data === "not_configured") {
+        setNotConfiguredKeys((prev) => new Set(prev).add(key));
+        return;
+      }
+      if (!data) return;
       // Keep the same table object when nothing changed, so charts don't
-      // re-render (or replay their entrance animation) on every poll.
-      setLoaded((prev) =>
-        prev?.key === dataKey && JSON.stringify(prev.table) === JSON.stringify(data)
-          ? { ...prev, at: new Date() }
-          : { key: dataKey, table: data, at: new Date() }
-      );
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionSlug, vizId]);
+      // re-render on every poll.
+      setTables((prev) => {
+        const existing = prev[key];
+        const table =
+          existing && JSON.stringify(existing.table) === JSON.stringify(data) ? existing.table : data;
+        return { ...prev, [key]: { table, at: new Date() } };
+      });
+    },
+    [sessionSlug]
+  );
+
+  // Prefetch every question of the lesson once, when the presentation opens.
+  useEffect(() => {
+    QUESTION_NUMBERS.forEach((q) => loadQuestion(q));
+  }, [loadQuestion]);
+
+  // Keep the slide on screen fresh.
+  const currentQuestion = meta?.questionNumber;
+  const load = useCallback(async () => {
+    if (currentQuestion) await loadQuestion(currentQuestion);
+  }, [currentQuestion, loadQuestion]);
 
   useEffect(() => {
-    load();
     const interval = setInterval(load, REFRESH_INTERVAL_MS);
     return () => clearInterval(interval);
   }, [load]);
@@ -158,7 +175,7 @@ export function PresentationPage() {
       {!table ? (
         <p className="text-slate-400">{t.common.loading}</p>
       ) : (
-        <VizBody vizId={vizId} table={table} lang={lang} noDataLabel={t.present.noData} />
+        <VizBody key={vizId} vizId={vizId} table={table} lang={lang} noDataLabel={t.present.noData} />
       )}
     </PresentationLayout>
   );
