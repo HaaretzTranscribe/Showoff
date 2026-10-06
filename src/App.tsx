@@ -1,6 +1,5 @@
 import { lazy, Suspense, useEffect } from "react";
 import { Route, Routes, useLocation } from "react-router-dom";
-import { isSheetConfigured } from "@/lib/sheetSessions";
 import { useI18n } from "@/i18n/I18nProvider";
 import { LanguageSwitcher } from "@/i18n/LanguageSwitcher";
 import { lessonLanguage } from "@/i18n/lessonLanguage";
@@ -14,17 +13,6 @@ import { InstructorControlPage } from "@/features/instructor/InstructorControlPa
 const PresentationPage = lazy(() =>
   import("@/features/present/PresentationPage").then((m) => ({ default: m.PresentationPage }))
 );
-
-function NotConfiguredScreen() {
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-white text-center">
-      <div className="animate-fade-in-up">
-        <h1 className="mb-2 text-xl font-bold text-slate-900">Sessions sheet not connected</h1>
-        <p className="text-slate-500">Set VITE_SESSIONS_SHEET_CSV_URL to run ShowOff.</p>
-      </div>
-    </div>
-  );
-}
 
 function HomePage() {
   const { t } = useI18n();
@@ -60,10 +48,6 @@ function LessonLanguageSync() {
 }
 
 export function App() {
-  if (!isSheetConfigured) {
-    return <NotConfiguredScreen />;
-  }
-
   return (
     <>
       <LessonLanguageSync />

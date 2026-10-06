@@ -82,6 +82,16 @@ Note the order: the free-text question is **second**, as in the Hebrew form.
 
 ---
 
+## Attendance form (the form students fill when they first join)
+
+Copy of the Hebrew lesson-1 attendance form. Title: **Data Storytelling 2026/7 – Lesson 1**
+
+1. **Full name** — Short answer
+2. **Email address** — Short answer
+3. **Lesson code** — Short answer
+
+---
+
 ## After creating the forms
 
 1. In each form: Responses → Link to Sheets. Publish each responses sheet

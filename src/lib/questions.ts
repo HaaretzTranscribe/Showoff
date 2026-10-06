@@ -1,66 +1,14 @@
-import { parseCsvRecords } from "./csv";
-import { toCsvUrl } from "./googleSheetUrl";
 import type { QuestionInfo } from "@/domain/types";
 
-const questionsCsvUrl = import.meta.env.VITE_QUESTIONS_SHEET_CSV_URL as string | undefined;
-
-export const isQuestionsSheetConfigured = Boolean(questionsCsvUrl);
-
-function pick(record: Record<string, string>, ...keys: string[]): string {
-  for (const key of keys) {
-    if (record[key]) return record[key];
-  }
-  return "";
-}
-
-function recordToQuestion(record: Record<string, string>): QuestionInfo | null {
-  const lessonKey = pick(record, "lesson_number", "lesson", "session_slug", "slug");
-  const questionNumber = pick(record, "question_number", "question", "number");
-  const googleFormUrl = pick(record, "google_form_url", "form_url");
-  if (!lessonKey || !questionNumber || !googleFormUrl) return null;
-
-  const responsesCsvUrl = pick(record, "responses_csv_url", "response_csv_url", "responses_url");
-
-  return {
-    lessonKey,
-    questionNumber,
-    title: pick(record, "title", "label"),
-    googleFormUrl,
-    responsesCsvUrl: responsesCsvUrl ? toCsvUrl(responsesCsvUrl) : null,
-  };
-}
-
-async function fetchAllQuestions(): Promise<QuestionInfo[]> {
-  if (!questionsCsvUrl) return [];
-
-  let text: string;
+/** The lesson's ordered questions, read on the server (netlify/functions/sheets.mts). */
+export async function listQuestionsForLesson(lessonKey: string): Promise<QuestionInfo[]> {
   try {
-    const response = await fetch(toCsvUrl(questionsCsvUrl), { cache: "no-store" });
+    const response = await fetch(`/api/questions?lesson=${encodeURIComponent(lessonKey)}`, {
+      cache: "no-store",
+    });
     if (!response.ok) return [];
-    text = await response.text();
+    return await response.json();
   } catch {
     return [];
   }
-
-  const records = parseCsvRecords(text);
-  return records.map(recordToQuestion).filter((q): q is QuestionInfo => q !== null);
-}
-
-/** Fetches the published questions Sheet and returns this lesson's questions, ordered. */
-export async function listQuestionsForLesson(lessonKey: string): Promise<QuestionInfo[]> {
-  const questions = await fetchAllQuestions();
-  return questions
-    .filter((q) => q.lessonKey === lessonKey)
-    .sort((a, b) => {
-      const numericDiff = Number(a.questionNumber) - Number(b.questionNumber);
-      return Number.isNaN(numericDiff) ? a.questionNumber.localeCompare(b.questionNumber) : numericDiff;
-    });
-}
-
-export async function getQuestion(
-  lessonKey: string,
-  questionNumber: string
-): Promise<QuestionInfo | null> {
-  const questions = await fetchAllQuestions();
-  return questions.find((q) => q.lessonKey === lessonKey && q.questionNumber === questionNumber) ?? null;
 }

@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { getQuestion } from "@/lib/questions";
 import { fetchResponses, type ResponseTable } from "@/lib/responses";
 import { useI18n } from "@/i18n/I18nProvider";
 import { lessonLanguage } from "@/i18n/lessonLanguage";
@@ -12,7 +11,9 @@ import { ScatterChartCard } from "./charts/ScatterChartCard";
 import { WorstExperiencesCard } from "./charts/WorstExperiencesCard";
 import * as viz from "./lesson1Visualizations";
 
-const REFRESH_INTERVAL_MS = 5 * 60 * 1000;
+// Responses are read live from the sheet (see netlify/functions/sheets.mts),
+// so a short interval shows new answers during class within seconds.
+const REFRESH_INTERVAL_MS = 15 * 1000;
 
 interface VizMeta {
   questionNumber: string;
@@ -103,14 +104,19 @@ export function PresentationPage() {
 
   const load = useCallback(async () => {
     if (!meta) return;
-    const question = await getQuestion(sessionSlug, meta.questionNumber);
-    if (!question?.responsesCsvUrl) {
+    const data = await fetchResponses(sessionSlug, meta.questionNumber);
+    if (data === "not_configured") {
       setNotConfiguredKey(dataKey);
       return;
     }
-    const data = await fetchResponses(question.responsesCsvUrl);
     if (data) {
-      setLoaded({ key: dataKey, table: data, at: new Date() });
+      // Keep the same table object when nothing changed, so charts don't
+      // re-render (or replay their entrance animation) on every poll.
+      setLoaded((prev) =>
+        prev?.key === dataKey && JSON.stringify(prev.table) === JSON.stringify(data)
+          ? { ...prev, at: new Date() }
+          : { key: dataKey, table: data, at: new Date() }
+      );
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionSlug, vizId]);

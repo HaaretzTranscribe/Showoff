@@ -1,5 +1,3 @@
-import { parseCsv } from "./csv";
-import { toCsvUrl } from "./googleSheetUrl";
 
 /**
  * Raw Google Forms response data, kept positional (headers as literal
@@ -14,15 +12,23 @@ export interface ResponseTable {
   rows: string[][];
 }
 
-export async function fetchResponses(csvUrl: string): Promise<ResponseTable | null> {
+/**
+ * One question's responses, read on the server (netlify/functions/sheets.mts).
+ * "not_configured" = the question has no responses link in the sheet;
+ * null = the sheet couldn't be read right now.
+ */
+export async function fetchResponses(
+  lessonKey: string,
+  questionNumber: string
+): Promise<ResponseTable | "not_configured" | null> {
   try {
-    const response = await fetch(toCsvUrl(csvUrl), { cache: "no-store" });
+    const response = await fetch(
+      `/api/responses?lesson=${encodeURIComponent(lessonKey)}&question=${encodeURIComponent(questionNumber)}`,
+      { cache: "no-store" }
+    );
+    if (response.status === 404) return "not_configured";
     if (!response.ok) return null;
-    const text = await response.text();
-    const allRows = parseCsv(text).filter((r) => r.some((cell) => cell.trim() !== ""));
-    if (allRows.length === 0) return { headers: [], rows: [] };
-    const [headers, ...rows] = allRows;
-    return { headers, rows };
+    return await response.json();
   } catch {
     return null;
   }

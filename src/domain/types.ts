@@ -11,22 +11,19 @@ export interface PublicSessionInfo {
   courseName: string;
   title: string;
   sessionDate: string;
-  attendanceCode: string;
   googleFormUrl: string | null;
   status: SessionStatus;
 }
 
 /**
- * One row of the published questions Google Sheet — a lesson's
- * pre-planned ordered list of question Forms. See src/lib/questions.ts.
+ * One of a lesson's pre-planned, ordered question Forms, as the server
+ * returns it from the questions sheet (without its responses link — that
+ * stays server-side). See src/lib/questions.ts.
  */
 export interface QuestionInfo {
-  lessonKey: string;
   questionNumber: string;
   title: string;
   googleFormUrl: string;
-  /** Published-CSV link for this question's Form response Sheet — see src/lib/responses.ts. */
-  responsesCsvUrl: string | null;
 }
 
 /**

@@ -8,9 +8,9 @@ import type { QuestionInfo } from "@/domain/types";
 
 /**
  * Unlisted control surface — not linked from any student-facing page.
- * Deliberately has no login (same trust model as the rest of this
- * project); anyone with this URL can change what's live for this
- * lesson. See docs/phase_2_addendum_live_questions.md.
+ * Anyone can open it, but changing what's live needs the instructor
+ * password (asked once per browser — see src/lib/activeQuestion.ts).
+ * See docs/phase_2_addendum_live_questions.md.
  */
 export function InstructorControlPage() {
   const { sessionSlug = "" } = useParams();

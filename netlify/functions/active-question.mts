@@ -5,10 +5,10 @@
 // This is the one piece of state that genuinely needs a live backend
 // (see docs/phase_2_addendum_live_questions.md) — everything else in
 // this app still runs off a published Google Sheet with no backend at
-// all. Deliberately unauthenticated, same trust model as the rest of
-// this project (the attendance code, the join link): the control page
-// that calls this isn't linked from anywhere a student would find it.
-// Do not treat this as real access control.
+// all. Reading is open (students' /live pages poll it). Changing it
+// needs the instructor password in an `x-instructor-password` header
+// when the INSTRUCTOR_PASSWORD env var is set; if it isn't set, POST
+// stays open so nothing breaks before it's configured.
 
 import type { Context } from "@netlify/functions";
 import { getStore } from "@netlify/blobs";
@@ -38,6 +38,11 @@ export default async (req: Request, _context: Context) => {
   }
 
   if (req.method === "POST") {
+    const password = process.env.INSTRUCTOR_PASSWORD;
+    if (password && req.headers.get("x-instructor-password") !== password) {
+      return jsonResponse({ error: "wrong_password" }, 401);
+    }
+
     let body: ActiveQuestionBody;
     try {
       body = await req.json();
