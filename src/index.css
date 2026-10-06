@@ -45,6 +45,14 @@ html[dir="rtl"] {
  * docs/phase_2_addendum_visualizations.md). Scaling each bar's own
  * group element from its own bottom edge is reliable regardless of
  * data size and doesn't depend on Recharts' internal animation state.
+ *
+ * The animations sit on the containers (.recharts-bar-rectangles,
+ * .recharts-label-list), not on each bar/label: Recharts re-creates the
+ * individual bar and label elements on every re-render — including the
+ * results screen's 15s poll, even with unchanged data — which restarted
+ * per-element animations each time. The containers stay mounted, so the
+ * animation plays once per chart. All bars share one baseline, so scaling
+ * the whole group from its bottom looks the same as each bar growing.
  */
 @keyframes bar-grow-up {
   from {
@@ -59,14 +67,13 @@ html[dir="rtl"] {
   --bar-grow-duration: 1.6s;
 }
 
-.chart-bars-animated .recharts-bar-rectangle path {
+.chart-bars-animated .recharts-bar-rectangles {
   transform-box: fill-box;
   transform-origin: bottom;
   animation: bar-grow-up var(--bar-grow-duration) cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-/* Value-number labels stay invisible until their bar has finished growing. */
-.chart-bars-animated .chart-value-label {
-  opacity: 0;
+/* Value-number labels stay invisible until the bars have finished growing. */
+.chart-bars-animated .recharts-label-list {
   animation: fade-in 0.35s ease-out var(--bar-grow-duration) both;
 }
