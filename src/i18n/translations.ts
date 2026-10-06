@@ -71,7 +71,7 @@ const en: Dictionary = {
     closedBody: "This session's attendance window has ended.",
     formInstructions: "Enter your details and the code shown in class in the form below.",
     formMissing: "No roll-call form has been set up for this session yet.",
-    continueButton: "Continue to class",
+    continueButton: "Signed in? For sure? Then on to the questions",
   },
   control: {
     title: "Question control",
