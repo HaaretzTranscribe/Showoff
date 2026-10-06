@@ -3,16 +3,84 @@ import { useParams } from "react-router-dom";
 import { useI18n } from "@/i18n/I18nProvider";
 import { LanguageSwitcher } from "@/i18n/LanguageSwitcher";
 import { listQuestionsForLesson } from "@/lib/questions";
-import { getActiveQuestion, setActiveQuestion } from "@/lib/activeQuestion";
+import {
+  getActiveQuestion,
+  rememberInstructorPassword,
+  setActiveQuestion,
+  verifyInstructorPassword,
+} from "@/lib/activeQuestion";
 import type { QuestionInfo } from "@/domain/types";
 
 /**
  * Unlisted control surface — not linked from any student-facing page.
- * Anyone can open it, but changing what's live needs the instructor
- * password (asked once per browser — see src/lib/activeQuestion.ts).
+ * Shows nothing but a password field until the instructor password is
+ * entered; it's then remembered in this browser, so it's asked once per
+ * machine (see src/lib/activeQuestion.ts). The server checks the same
+ * password before changing what's live.
  * See docs/phase_2_addendum_live_questions.md.
  */
 export function InstructorControlPage() {
+  const [unlocked, setUnlocked] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    verifyInstructorPassword().then(setUnlocked);
+  }, []);
+
+  if (unlocked === null) return <div className="min-h-screen bg-white" />;
+  if (!unlocked) return <PasswordGate onUnlock={() => setUnlocked(true)} />;
+  return <ControlPanel />;
+}
+
+function PasswordGate({ onUnlock }: { onUnlock: () => void }) {
+  const { t } = useI18n();
+  const [password, setPassword] = useState("");
+  const [checking, setChecking] = useState(false);
+  const [wrong, setWrong] = useState(false);
+
+  async function handleSubmit(event: React.FormEvent) {
+    event.preventDefault();
+    setChecking(true);
+    const ok = await verifyInstructorPassword(password.trim());
+    setChecking(false);
+    if (ok) {
+      rememberInstructorPassword(password.trim());
+      onUnlock();
+    } else {
+      setWrong(true);
+    }
+  }
+
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-blue-50 to-white px-4">
+      <form onSubmit={handleSubmit} className="flex w-full max-w-xs flex-col gap-3">
+        <label className="font-semibold text-blue-900" htmlFor="instructor-password">
+          {t.control.passwordPrompt}
+        </label>
+        <input
+          id="instructor-password"
+          type="password"
+          autoFocus
+          value={password}
+          onChange={(e) => {
+            setPassword(e.target.value);
+            setWrong(false);
+          }}
+          className="rounded-xl border border-blue-200 px-4 py-3 text-lg"
+        />
+        {wrong && <p className="text-sm text-red-600">{t.control.wrongPassword}</p>}
+        <button
+          type="submit"
+          disabled={checking || !password.trim()}
+          className="rounded-xl bg-blue-700 px-4 py-3 text-lg font-medium text-white disabled:opacity-50"
+        >
+          {t.control.enter}
+        </button>
+      </form>
+    </div>
+  );
+}
+
+function ControlPanel() {
   const { sessionSlug = "" } = useParams();
   const { t } = useI18n();
 

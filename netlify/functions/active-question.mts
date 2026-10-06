@@ -1,6 +1,7 @@
 // GET  /api/active-question?lesson=<key>  -> current active question for that lesson, or null
 // POST /api/active-question  { lesson, formUrl, title, questionNumber }  -> sets it
 // POST /api/active-question  { lesson, formUrl: null }                  -> clears it (waiting state)
+// POST /api/active-question  { verifyOnly: true }                       -> only checks the password (control page login)
 //
 // This is the one piece of state that genuinely needs a live backend
 // (see docs/phase_2_addendum_live_questions.md) — everything else in
@@ -14,6 +15,7 @@ import type { Context } from "@netlify/functions";
 import { getStore } from "@netlify/blobs";
 
 interface ActiveQuestionBody {
+  verifyOnly?: boolean;
   lesson?: string;
   formUrl?: string | null;
   title?: string | null;
@@ -49,6 +51,7 @@ export default async (req: Request, _context: Context) => {
     } catch {
       return jsonResponse({ error: "invalid_json" }, 400);
     }
+    if (body.verifyOnly) return jsonResponse({ ok: true });
     if (!body.lesson) return jsonResponse({ error: "missing_lesson" }, 400);
 
     if (!body.formUrl) {

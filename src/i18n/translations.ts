@@ -36,6 +36,9 @@ export interface Dictionary {
     activeLabel: string;
     loading: string;
     noQuestions: string;
+    passwordPrompt: string;
+    enter: string;
+    wrongPassword: string;
   };
   present: {
     refreshNow: string;
@@ -76,6 +79,9 @@ const en: Dictionary = {
     activeLabel: "live now",
     loading: "Loading questions…",
     noQuestions: "No questions configured for this lesson yet.",
+    passwordPrompt: "Instructor password",
+    enter: "Enter",
+    wrongPassword: "Wrong password",
   },
   present: {
     refreshNow: "Refresh now",
@@ -116,6 +122,9 @@ const he: Dictionary = {
     activeLabel: "פעיל כעת",
     loading: "טוען שאלות…",
     noQuestions: "עדיין לא הוגדרו שאלות למפגש הזה.",
+    passwordPrompt: "סיסמת מרצה",
+    enter: "כניסה",
+    wrongPassword: "סיסמה שגויה",
   },
   present: {
     refreshNow: "רענון עכשיו",
