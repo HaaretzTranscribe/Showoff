@@ -6,7 +6,7 @@ import { lessonKeyFor, lessonLanguage } from "./lessonLanguage";
 /**
  * With `switchesLesson` (instructor control/present pages), picking a
  * language also jumps to that language's run of the lesson — e.g. from
- * /control/1 to /control/1en — keeping the rest of the path (the viz
+ * /control/1 to /control/1e — keeping the rest of the path (the viz
  * number on /present). Elsewhere it only changes the UI language.
  */
 export function LanguageSwitcher({ switchesLesson = false }: { switchesLesson?: boolean }) {

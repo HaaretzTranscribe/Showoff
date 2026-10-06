@@ -1,4 +1,4 @@
-# Lesson 1 — English Forms (lesson key `1en`)
+# Lesson 1 — English Forms (lesson key `1e`)
 
 Five Google Forms, each a copy of the matching Hebrew form, translated.
 Copy the text **exactly**: the presentation screen matches answers by
@@ -97,5 +97,5 @@ Copy of the Hebrew lesson-1 attendance form. Title: **Data Storytelling 2026/7 �
 1. In each form: Responses → Link to Sheets. Publish each responses sheet
    to the web as CSV, as with the Hebrew forms.
 2. Questions sheet: copy lesson 1's five rows, set `lesson_number` to
-   `1en`, and replace the form and responses-CSV links with the new ones.
-3. Sessions sheet: copy lesson 1's row and set its key to `1en`.
+   `1e`, and replace the form and responses-CSV links with the new ones.
+3. Sessions sheet: copy lesson 1's row and set its key to `1e`.

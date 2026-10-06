@@ -78,6 +78,15 @@ const VIZ_META: Record<string, VizMeta> = {
 const VIZ_ORDER = Object.keys(VIZ_META).sort((a, b) => Number(a) - Number(b));
 const QUESTION_NUMBERS = Array.from(new Set(Object.values(VIZ_META).map((m) => m.questionNumber)));
 
+/**
+ * Remount key for the viz on screen: each chart slide gets a fresh chart so
+ * its entrance animation plays, but the big-number slides (7-9) share one
+ * card so the number runs from the previous slide's value to the new one.
+ */
+function vizKey(vizId: string): string {
+  return ["7", "8", "9"].includes(vizId) ? "big-number" : vizId;
+}
+
 interface LoadedTable {
   table: ResponseTable;
   at: Date;
@@ -175,7 +184,7 @@ export function PresentationPage() {
       {!table ? (
         <p className="text-slate-400">{t.common.loading}</p>
       ) : (
-        <VizBody key={vizId} vizId={vizId} table={table} lang={lang} noDataLabel={t.present.noData} />
+        <VizBody key={vizKey(vizId)} vizId={vizId} table={table} lang={lang} noDataLabel={t.present.noData} />
       )}
     </PresentationLayout>
   );
