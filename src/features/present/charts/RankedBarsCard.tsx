@@ -43,7 +43,8 @@ export function RankedBarsCard({ shares, lang }: { shares: ChoiceShare[]; lang: 
                 className={`ranked-bar-fill h-full rounded-full ${
                   leading ? "bg-gradient-to-r from-blue-800 to-blue-500 rtl:bg-gradient-to-l" : "bg-blue-300"
                 }`}
-                style={{ width: `${share.value}%`, animationDelay: `${i * 120}ms` }}
+                // A 0% option still shows a small stub.
+                style={{ width: `max(0.75rem, ${share.value}%)`, animationDelay: `${i * 120}ms` }}
               />
             </div>
           </div>

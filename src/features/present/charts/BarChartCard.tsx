@@ -61,6 +61,8 @@ export function BarChartCard({
           dataKey="value"
           radius={[10, 10, 0, 0]}
           isAnimationActive={false}
+          // A 0% bar still shows as a thin stub, so an option nobody picked is visible.
+          minPointSize={6}
           label={((props: ValueLabelProps) => (
             <ValueLabel {...props} suffix={valueSuffix} />
           )) as unknown as boolean}

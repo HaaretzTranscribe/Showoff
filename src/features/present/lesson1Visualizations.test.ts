@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { viz1, viz3, viz4, viz6, viz10, viz11, viz12 } from "./lesson1Visualizations";
+import { viz1, viz5, viz3, viz4, viz6, viz10, viz11, viz12 } from "./lesson1Visualizations";
 import type { ResponseTable } from "@/lib/responses";
 
 function table(rows: string[][]): ResponseTable {
@@ -13,6 +13,19 @@ describe("viz1 — Q1 Yes/No as % of respondents", () => {
       { label: "כן", value: 67 },
       { label: "לא", value: 33 },
     ]);
+  });
+});
+
+describe("viz1/viz5 — every Form option is shown", () => {
+  it("keeps an option nobody picked, at 0%", () => {
+    expect(viz1(table([["t", "כן"]]))).toEqual([
+      { label: "כן", value: 100 },
+      { label: "לא", value: 0 },
+    ]);
+    const transport = viz5(table([["t", "x", "By bus"]]), "en");
+    expect(transport).toHaveLength(6);
+    expect(transport[0]).toEqual({ label: "By bus", value: 100 });
+    expect(transport[5]).toEqual({ label: "Other", value: 0 });
   });
 });
 

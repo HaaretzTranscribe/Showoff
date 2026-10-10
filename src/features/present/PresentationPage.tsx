@@ -270,7 +270,7 @@ function Lesson1Body({ vizId, table, lang, noDataLabel }: VizBodyProps) {
   switch (vizId) {
     case "1":
       return hasData ? (
-        <BarChartCard data={viz.viz1(table)} valueSuffix="%" />
+        <BarChartCard data={viz.viz1(table, lang)} valueSuffix="%" />
       ) : (
         <Empty label={noDataLabel} />
       );
@@ -294,7 +294,7 @@ function Lesson1Body({ vizId, table, lang, noDataLabel }: VizBodyProps) {
       );
     case "5":
       return hasData ? (
-        <BarChartCard data={viz.viz5(table)} valueSuffix="%" />
+        <BarChartCard data={viz.viz5(table, lang)} valueSuffix="%" />
       ) : (
         <Empty label={noDataLabel} />
       );
@@ -354,7 +354,7 @@ function Lesson2Body({ vizId, table, lang, noDataLabel }: VizBodyProps) {
       return <BarChartCard data={viz2.yesNoBars(table, lang)} valueSuffix="%" />;
     case "2":
     case "4":
-      return <RankedBarsCard shares={viz2.choiceShares(table)} lang={lang} />;
+      return <RankedBarsCard shares={viz2.choiceShares(table, viz2.CHOICES[vizId][lang])} lang={lang} />;
     case "5":
       return <AnswerWallCard answers={viz2.textAnswers(table)} lang={lang} />;
     default:

@@ -30,6 +30,9 @@ interface LessonText {
   mixed: string;
   minutes: string;
   quartile: string;
+  yesNo: [string, string];
+  /** Q3/Q4/Q5 transport options, in Form order. */
+  transport: string[];
   noComplaintPhrases: string[];
 }
 
@@ -43,6 +46,8 @@ const TEXT: Record<Language, LessonText> = {
     mixed: "מרוצה חלקית / לא כל כך מרוצה",
     minutes: "דקות",
     quartile: "רבעון",
+    yesNo: ["כן", "לא"],
+    transport: ["באוטובוס", "במכונית פרטית", "ברגל", "באופניים", "באופניים חשמליים/קורקינט חשמלי", "אחר"],
     noComplaintPhrases: [
       "הכל טוב",
       "הכל בסדר",
@@ -64,6 +69,8 @@ const TEXT: Record<Language, LessonText> = {
     mixed: "Somewhat / not very satisfied",
     minutes: "min",
     quartile: "Quartile",
+    yesNo: ["Yes", "No"],
+    transport: ["By bus", "By private car", "On foot", "By bicycle", "By e-bike/e-scooter", "Other"],
     noComplaintPhrases: [
       "all good",
       "everything is good",
@@ -104,10 +111,15 @@ function countBy(rows: string[][], col: number): Map<string, number> {
   return counts;
 }
 
-/** Converts counts to % of the total (rounded), rather than nominal counts — vizzes 1-2 and 5 are all normalized so bars are comparable regardless of how many students have responded so far. */
+/**
+ * Converts counts to % of the total (rounded), rather than nominal counts — vizzes 1-2 and 5 are all normalized so bars are comparable regardless of how many students have responded so far.
+ * `order` lists every Form option, so an option nobody picked still gets a 0% bar; any answer outside it is appended.
+ */
 function toPercentBarData(counts: Map<string, number>, order?: string[]): BarDatum[] {
   const total = Array.from(counts.values()).reduce((sum, v) => sum + v, 0);
-  const labels = order ?? Array.from(counts.keys());
+  const labels = order
+    ? [...order, ...Array.from(counts.keys()).filter((k) => !order.includes(k))]
+    : Array.from(counts.keys());
   return labels.map((label) => {
     const value = counts.get(label) ?? 0;
     return { label, value: total > 0 ? Math.round((value / total) * 100) : 0 };
@@ -127,8 +139,8 @@ function mean(values: number[]): number {
 }
 
 /** Viz 1 — bar chart, Q1's Yes/No as % of respondents. */
-export function viz1(table: ResponseTable): BarDatum[] {
-  return toPercentBarData(countBy(table.rows, COL.q1.satisfaction));
+export function viz1(table: ResponseTable, lang: Language = "he"): BarDatum[] {
+  return toPercentBarData(countBy(table.rows, COL.q1.satisfaction), TEXT[lang].yesNo);
 }
 
 /** Viz 2 — bar chart, Q2's 4-point satisfaction scale as % of respondents. */
@@ -180,8 +192,8 @@ export function viz4(table: ResponseTable, lang: Language = "he"): BarDatum[] {
 }
 
 /** Viz 5 — bar chart, Q3's transportation method as % of respondents. */
-export function viz5(table: ResponseTable): BarDatum[] {
-  return toPercentBarData(countBy(table.rows, COL.q3.method));
+export function viz5(table: ResponseTable, lang: Language = "he"): BarDatum[] {
+  return toPercentBarData(countBy(table.rows, COL.q3.method), TEXT[lang].transport);
 }
 
 /** Viz 6 — % dissatisfied per transportation method, from Q3. */

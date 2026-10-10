@@ -30,6 +30,15 @@ describe("choiceShares", () => {
     ]);
   });
 
+  it("lists options nobody picked at 0%, after the picked ones", () => {
+    const shares = choiceShares(table([["t", "B"]]), ["A", "B", "C"]);
+    expect(shares.map((s) => [s.label, s.value])).toEqual([
+      ["B", 100],
+      ["A", 0],
+      ["C", 0],
+    ]);
+  });
+
   it("strips a leading list marker from option text", () => {
     expect(choiceShares(table([["t", "- What share of the homes?"]]))[0].label).toBe("What share of the homes?");
   });
