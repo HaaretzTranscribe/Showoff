@@ -77,3 +77,30 @@ html[dir="rtl"] {
 .chart-bars-animated .recharts-label-list {
   animation: fade-in 0.35s ease-out var(--bar-grow-duration) both;
 }
+
+/*
+ * Lesson 2's ranked horizontal bars (RankedBarsCard): each bar grows from
+ * the start edge once when it mounts; later data changes ease the width.
+ */
+@keyframes bar-grow-x {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.ranked-bar-fill {
+  transform-origin: left;
+  animation: bar-grow-x 1.2s cubic-bezier(0.22, 1, 0.36, 1) both;
+  transition: width 0.8s ease;
+}
+
+[dir="rtl"] .ranked-bar-fill {
+  transform-origin: right;
+}
+
+.ranked-bar-value {
+  animation: fade-in 0.35s ease-out both;
+}

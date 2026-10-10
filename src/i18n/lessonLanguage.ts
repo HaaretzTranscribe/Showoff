@@ -15,3 +15,8 @@ export function lessonKeyFor(lessonKey: string, lang: Language): string {
   const base = lessonKey.replace(/en?$/i, "");
   return lang === "en" ? `${base}e` : base;
 }
+
+/** The lesson's number without its language suffix: "2e" -> "2", "2" -> "2". */
+export function lessonBase(lessonKey: string): string {
+  return lessonKey.replace(/en?$/i, "");
+}

@@ -2,14 +2,17 @@ import { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { fetchResponses, type ResponseTable } from "@/lib/responses";
 import { useI18n } from "@/i18n/I18nProvider";
-import { lessonLanguage } from "@/i18n/lessonLanguage";
+import { lessonBase, lessonLanguage } from "@/i18n/lessonLanguage";
 import type { Language } from "@/i18n/translations";
 import { PresentationLayout } from "./PresentationLayout";
 import { BarChartCard } from "./charts/BarChartCard";
 import { BigNumberCard } from "./charts/BigNumberCard";
 import { ScatterChartCard } from "./charts/ScatterChartCard";
 import { WorstExperiencesCard } from "./charts/WorstExperiencesCard";
+import { RankedBarsCard } from "./charts/RankedBarsCard";
+import { AnswerWallCard } from "./charts/AnswerWallCard";
 import * as viz from "./lesson1Visualizations";
+import * as viz2 from "./lesson2Visualizations";
 
 // Responses are read live from the sheet (see netlify/functions/sheets.mts),
 // so a short interval shows new answers during class within seconds.
@@ -20,11 +23,27 @@ interface VizMeta {
   title: Record<Language, string>;
 }
 
+interface VizBodyProps {
+  vizId: string;
+  table: ResponseTable;
+  lang: Language;
+  noDataLabel: string;
+}
+
+/** One lesson's slides: which question each reads and how it's drawn. */
+interface LessonScreen {
+  meta: Record<string, VizMeta>;
+  Body: (props: VizBodyProps) => JSX.Element | null;
+  /** Slides sharing a key keep one mounted viz between them (see lesson 1's 7-9). */
+  remountKey?: (vizId: string) => string;
+  darkVizIds?: string[];
+}
+
 // Bespoke per lesson, per the pedagogical plan for lesson 1 — see
 // docs/phase_2_addendum_visualizations.md. Future lessons get their
 // own registry as their visualization needs become concrete; this is
 // deliberately not a generic sheet-driven engine.
-const VIZ_META: Record<string, VizMeta> = {
+const LESSON1_META: Record<string, VizMeta> = {
   "1": {
     questionNumber: "1",
     title: { he: "שאלה 1 — האם מרוצה?", en: "Question 1 — Are you satisfied?" },
@@ -75,8 +94,53 @@ const VIZ_META: Record<string, VizMeta> = {
   },
 };
 
-const VIZ_ORDER = Object.keys(VIZ_META).sort((a, b) => Number(a) - Number(b));
-const QUESTION_NUMBERS = Array.from(new Set(Object.values(VIZ_META).map((m) => m.questionNumber)));
+// Lesson 2 (Hebrew "2", English "2e"): one slide per question.
+const LESSON2_META: Record<string, VizMeta> = {
+  "1": {
+    questionNumber: "1",
+    title: {
+      he: "שאלה 1 — האם לצעירים קשה לקנות דירה?",
+      en: "Question 1 — Is it difficult for young people to buy a home?",
+    },
+  },
+  "2": {
+    questionNumber: "2",
+    title: {
+      he: "שאלה 2 — מה הנתון שיגלה אם לצעירים קשה לקנות דירה?",
+      en: "Question 2 — What data would tell us whether young people struggle to buy a home?",
+    },
+  },
+  "3": {
+    questionNumber: "3",
+    title: {
+      he: "שאלה 3 — האם המדרכות בישראל מסוכנות להולכי רגל?",
+      en: "Question 3 — Are sidewalks in Israel dangerous?",
+    },
+  },
+  "4": {
+    questionNumber: "4",
+    title: {
+      he: "שאלה 4 — מה הנתונים שצריך לאסוף כדי להבין אם תחושת הבטן נכונה?",
+      en: "Question 4 — What data would help us?",
+    },
+  },
+  "5": {
+    questionNumber: "5",
+    title: {
+      he: "שאלה 5 — מה שאלות הדאטא שנשאלו בסרטון?",
+      en: "Question 5 — What data questions are asked in the video?",
+    },
+  },
+};
+
+const LESSONS: Record<string, LessonScreen> = {
+  "1": { meta: LESSON1_META, Body: Lesson1Body, remountKey: vizKey, darkVizIds: ["12"] },
+  "2": { meta: LESSON2_META, Body: Lesson2Body },
+};
+
+function slideOrder(meta: Record<string, VizMeta>): string[] {
+  return Object.keys(meta).sort((a, b) => Number(a) - Number(b));
+}
 
 /**
  * Remount key for the viz on screen: each chart slide gets a fresh chart so
@@ -102,18 +166,20 @@ export function PresentationPage() {
   const [tables, setTables] = useState<Record<string, LoadedTable>>({});
   const [notConfiguredKeys, setNotConfiguredKeys] = useState<Set<string>>(() => new Set());
 
-  const meta = VIZ_META[vizId];
+  const screen = LESSONS[lessonBase(sessionSlug)];
+  const meta = screen?.meta[vizId];
   const lang = lessonLanguage(sessionSlug);
+  const vizOrder = screen ? slideOrder(screen.meta) : [];
   const dataKey = meta ? `${sessionSlug}/${meta.questionNumber}` : "";
   const table = tables[dataKey]?.table ?? null;
   const lastUpdated = tables[dataKey]?.at ?? null;
   const notConfigured = notConfiguredKeys.has(dataKey);
-  const currentIndex = VIZ_ORDER.indexOf(vizId);
+  const currentIndex = vizOrder.indexOf(vizId);
   const prevHref =
-    currentIndex > 0 ? `/present/${sessionSlug}/${VIZ_ORDER[currentIndex - 1]}` : null;
+    currentIndex > 0 ? `/present/${sessionSlug}/${vizOrder[currentIndex - 1]}` : null;
   const nextHref =
-    currentIndex >= 0 && currentIndex < VIZ_ORDER.length - 1
-      ? `/present/${sessionSlug}/${VIZ_ORDER[currentIndex + 1]}`
+    currentIndex >= 0 && currentIndex < vizOrder.length - 1
+      ? `/present/${sessionSlug}/${vizOrder[currentIndex + 1]}`
       : null;
 
   const loadQuestion = useCallback(
@@ -139,8 +205,9 @@ export function PresentationPage() {
 
   // Prefetch every question of the lesson once, when the presentation opens.
   useEffect(() => {
-    QUESTION_NUMBERS.forEach((q) => loadQuestion(q));
-  }, [loadQuestion]);
+    if (!screen) return;
+    new Set(Object.values(screen.meta).map((m) => m.questionNumber)).forEach((q) => loadQuestion(q));
+  }, [screen, loadQuestion]);
 
   // Keep the slide on screen fresh.
   const currentQuestion = meta?.questionNumber;
@@ -153,7 +220,7 @@ export function PresentationPage() {
     return () => clearInterval(interval);
   }, [load]);
 
-  if (!meta) {
+  if (!screen || !meta) {
     return <div className="p-8 text-center text-slate-500">Unknown visualization.</div>;
   }
 
@@ -176,7 +243,7 @@ export function PresentationPage() {
       title={meta.title[lang]}
       lastUpdated={lastUpdated}
       onRefresh={load}
-      dark={vizId === "12"}
+      dark={screen.darkVizIds?.includes(vizId) ?? false}
       respondentCount={table?.rows.length ?? null}
       prevHref={prevHref}
       nextHref={nextHref}
@@ -184,23 +251,19 @@ export function PresentationPage() {
       {!table ? (
         <p className="text-slate-400">{t.common.loading}</p>
       ) : (
-        <VizBody key={vizKey(vizId)} vizId={vizId} table={table} lang={lang} noDataLabel={t.present.noData} />
+        <screen.Body
+          key={screen.remountKey?.(vizId) ?? vizId}
+          vizId={vizId}
+          table={table}
+          lang={lang}
+          noDataLabel={t.present.noData}
+        />
       )}
     </PresentationLayout>
   );
 }
 
-function VizBody({
-  vizId,
-  table,
-  lang,
-  noDataLabel,
-}: {
-  vizId: string;
-  table: ResponseTable;
-  lang: Language;
-  noDataLabel: string;
-}) {
+function Lesson1Body({ vizId, table, lang, noDataLabel }: VizBodyProps) {
   const hasData = table.rows.length > 0;
   const minutes = lang === "en" ? "min" : "דקות";
 
@@ -277,6 +340,23 @@ function VizBody({
       );
     case "12":
       return <WorstExperiencesCard texts={viz.viz12(table, lang)} noDataLabel={noDataLabel} />;
+    default:
+      return null;
+  }
+}
+
+function Lesson2Body({ vizId, table, lang, noDataLabel }: VizBodyProps) {
+  if (table.rows.length === 0) return <Empty label={noDataLabel} />;
+
+  switch (vizId) {
+    case "1":
+    case "3":
+      return <BarChartCard data={viz2.yesNoBars(table, lang)} valueSuffix="%" />;
+    case "2":
+    case "4":
+      return <RankedBarsCard shares={viz2.choiceShares(table)} lang={lang} />;
+    case "5":
+      return <AnswerWallCard answers={viz2.textAnswers(table)} lang={lang} />;
     default:
       return null;
   }
