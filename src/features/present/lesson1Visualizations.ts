@@ -262,7 +262,6 @@ export function viz10(table: ResponseTable, lang: Language = "he"): BarDatum[] {
     satisfaction: string;
     time: number;
   }[];
-  if (rows.length === 0) return [];
 
   const sorted = [...rows].sort((a, b) => a.time - b.time);
   const quartileCount = 4;
@@ -271,7 +270,11 @@ export function viz10(table: ResponseTable, lang: Language = "he"): BarDatum[] {
   const buckets: BarDatum[] = [];
   for (let i = 0; i < quartileCount; i++) {
     const slice = sorted.slice(i * size, (i + 1) * size);
-    if (slice.length === 0) continue;
+    // Always four bars: a quartile with no answers yet shows at 0%, unlabeled by range.
+    if (slice.length === 0) {
+      buckets.push({ label: `${quartile} ${i + 1}`, value: 0 });
+      continue;
+    }
     const negative = slice.filter((r) => NEGATIVE.includes(r.satisfaction)).length;
     const times = slice.map((r) => r.time);
     const rangeLabel =
@@ -322,7 +325,8 @@ export function viz11(table: ResponseTable, lang: Language = "he"): ScatterGroup
     else groups.mixed.points.push(point);
   }
 
-  return [groups.pleased, groups.mixed, groups.unpleased].filter((g) => g.points.length > 0);
+  // All three groups, even empty ones, so the legend always shows every satisfaction level.
+  return [groups.pleased, groups.mixed, groups.unpleased];
 }
 
 /** Strips one trailing "." (only) — keeps "?"/"!" as-is, just tidies a plain full stop for display. */

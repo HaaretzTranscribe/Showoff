@@ -107,8 +107,18 @@ describe("viz10 — % dissatisfied per time quartile", () => {
     expect(result[3].label).toContain("7-8");
   });
 
-  it("returns an empty array when no time values are parseable", () => {
-    expect(viz10(table([["t", "מרוצה מאוד", "", "", "not a number"]]))).toEqual([]);
+  it("still returns four 0% quartiles when no time values are parseable", () => {
+    expect(viz10(table([["t", "מרוצה מאוד", "", "", "not a number"]]))).toEqual([
+      { label: "רבעון 1", value: 0 },
+      { label: "רבעון 2", value: 0 },
+      { label: "רבעון 3", value: 0 },
+      { label: "רבעון 4", value: 0 },
+    ]);
+  });
+
+  it("keeps all four quartiles with a single answer", () => {
+    const result = viz10(table([["t", "Not satisfied at all", "", "", "68"]]), "en");
+    expect(result.map((b) => b.label)).toEqual(["Quartile 1 (68 min)", "Quartile 2", "Quartile 3", "Quartile 4"]);
   });
 });
 
@@ -138,6 +148,7 @@ describe("viz11 — scatter groups by satisfaction, excluding time outliers", ()
     const groups = viz11(table(rows));
     const allPoints = groups.flatMap((g) => g.points);
     expect(allPoints).toEqual([{ x: 30, y: 600 }]);
+    expect(groups).toHaveLength(3); // empty groups stay, for the legend
   });
 });
 
