@@ -209,10 +209,14 @@ export function viz6(table: ResponseTable, lang: Language = "he"): BarDatum[] {
     if (NEGATIVE.includes(satisfaction)) entry.negative += 1;
     byMethod.set(method, entry);
   }
-  return Array.from(byMethod.entries()).map(([label, { total, negative }]) => ({
-    label,
-    value: total > 0 ? Math.round((negative / total) * 100) : 0,
-  }));
+  // Every transport option in Form order (then any other answer), so a
+  // method nobody chose still shows — at 0%, like one nobody dislikes.
+  const { transport } = TEXT[lang];
+  const labels = [...transport, ...Array.from(byMethod.keys()).filter((m) => !transport.includes(m))];
+  return labels.map((label) => {
+    const { total, negative } = byMethod.get(label) ?? { total: 0, negative: 0 };
+    return { label, value: total > 0 ? Math.round((negative / total) * 100) : 0 };
+  });
 }
 
 function costTimeRows(

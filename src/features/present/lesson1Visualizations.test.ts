@@ -71,9 +71,23 @@ describe("viz6 — % dissatisfied per transport method", () => {
     expect(result.find((r) => r.label === "ברגל")?.value).toBe(0);
   });
 
-  it("skips rows missing method or satisfaction", () => {
+  it("skips rows missing method or satisfaction, still listing every method at 0%", () => {
     const result = viz6(table([["t", "", "באוטובוס"], ["t", "מרוצה מאוד", ""]]));
-    expect(result).toEqual([]);
+    expect(result).toHaveLength(6);
+    expect(result.every((r) => r.value === 0)).toBe(true);
+  });
+
+  it("lists every English transport option in Form order", () => {
+    const result = viz6(table([["t", "Not satisfied at all", "On foot"]]), "en");
+    expect(result.map((r) => r.label)).toEqual([
+      "By bus",
+      "By private car",
+      "On foot",
+      "By bicycle",
+      "By e-bike/e-scooter",
+      "Other",
+    ]);
+    expect(result[2].value).toBe(100);
   });
 });
 
