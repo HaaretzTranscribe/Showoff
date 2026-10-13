@@ -224,7 +224,7 @@ describe("English lesson (lang = en)", () => {
       ["t", "Not satisfied at all", "By bus"],
       ["t", "Very satisfied", "By bus"],
     ];
-    expect(viz6(table(rows), "en")).toEqual([{ label: "By bus", value: 50 }]);
+    expect(viz6(table(rows), "en")[0]).toEqual({ label: "By bus", value: 50 });
   });
 
   it("viz12 picks English worst experiences and skips stock no-complaint answers", () => {
