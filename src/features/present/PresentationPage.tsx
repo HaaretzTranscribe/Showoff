@@ -7,6 +7,7 @@ import type { Language } from "@/i18n/translations";
 import { PresentationLayout } from "./PresentationLayout";
 import { BarChartCard } from "./charts/BarChartCard";
 import { BigNumberCard } from "./charts/BigNumberCard";
+import { LineChartCard } from "./charts/LineChartCard";
 import { ScatterChartCard } from "./charts/ScatterChartCard";
 import { WorstExperiencesCard } from "./charts/WorstExperiencesCard";
 import { RankedBarsCard } from "./charts/RankedBarsCard";
@@ -82,7 +83,7 @@ const LESSON1_META: Record<string, VizMeta> = {
   },
   "10": {
     questionNumber: "4",
-    title: { he: "שאלה 4 — % לא מרוצים לפי רבעון זמן", en: "Question 4 — % dissatisfied by commute-time quartile" },
+    title: { he: "שאלה 4 — % לא מרוצים לפי זמן הגעה", en: "Question 4 — % dissatisfied by commute time" },
   },
   "11": {
     questionNumber: "4",
@@ -324,7 +325,7 @@ function Lesson1Body({ vizId, table, lang, noDataLabel }: VizBodyProps) {
       );
     case "10":
       return hasData ? (
-        <BarChartCard data={viz.viz10(table, lang)} valueSuffix="%" />
+        <LineChartCard data={viz.viz10(table, lang)} valueSuffix="%" />
       ) : (
         <Empty label={noDataLabel} />
       );

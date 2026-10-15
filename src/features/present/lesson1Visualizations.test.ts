@@ -108,17 +108,16 @@ describe("viz10 — % dissatisfied per time quartile", () => {
   });
 
   it("still returns four 0% quartiles when no time values are parseable", () => {
-    expect(viz10(table([["t", "מרוצה מאוד", "", "", "not a number"]]))).toEqual([
-      { label: "רבעון 1", value: 0 },
-      { label: "רבעון 2", value: 0 },
-      { label: "רבעון 3", value: 0 },
-      { label: "רבעון 4", value: 0 },
-    ]);
+    const result = viz10(table([["t", "מרוצה מאוד", "", "", "not a number"]]));
+    expect(result).toHaveLength(4);
+    expect(result.every((b) => b.value === 0 && b.label.startsWith("—"))).toBe(true);
+    expect(new Set(result.map((b) => b.label)).size).toBe(4); // distinct, for the chart
   });
 
   it("keeps all four quartiles with a single answer", () => {
     const result = viz10(table([["t", "Not satisfied at all", "", "", "68"]]), "en");
-    expect(result.map((b) => b.label)).toEqual(["Quartile 1 (68 min)", "Quartile 2", "Quartile 3", "Quartile 4"]);
+    expect(result[0].label).toBe("68 min");
+    expect(result.slice(1).every((b) => b.label.startsWith("—"))).toBe(true);
   });
 });
 

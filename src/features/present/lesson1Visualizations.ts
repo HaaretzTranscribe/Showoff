@@ -29,7 +29,6 @@ interface LessonText {
   notPleasedSomehow: string;
   mixed: string;
   minutes: string;
-  quartile: string;
   yesNo: [string, string];
   /** Q3/Q4/Q5 transport options, in Form order. */
   transport: string[];
@@ -45,7 +44,6 @@ const TEXT: Record<Language, LessonText> = {
     notPleasedSomehow: "לא מרוצים ברמה כלשהי",
     mixed: "מרוצה חלקית / לא כל כך מרוצה",
     minutes: "דקות",
-    quartile: "רבעון",
     yesNo: ["כן", "לא"],
     transport: ["באוטובוס", "במכונית פרטית", "ברגל", "באופניים", "באופניים חשמליים/קורקינט חשמלי", "אחר"],
     noComplaintPhrases: [
@@ -68,7 +66,6 @@ const TEXT: Record<Language, LessonText> = {
     notPleasedSomehow: "Not satisfied to some degree",
     mixed: "Somewhat / not very satisfied",
     minutes: "min",
-    quartile: "Quartile",
     yesNo: ["Yes", "No"],
     transport: ["By bus", "By private car", "On foot", "By bicycle", "By e-bike/e-scooter", "Other"],
     noComplaintPhrases: [
@@ -254,10 +251,10 @@ export function viz9(table: ResponseTable): number {
   return median(times);
 }
 
-/** Viz 10 — % dissatisfied per quartile of commute time, from Q4. */
+/** Viz 10 — % dissatisfied per quartile of commute time, from Q4, each labeled by its time range (drawn as a line). */
 export function viz10(table: ResponseTable, lang: Language = "he"): BarDatum[] {
   const { negative: NEGATIVE } = levels(lang);
-  const { minutes, quartile } = TEXT[lang];
+  const { minutes } = TEXT[lang];
   const rows = costTimeRows(table).filter((r) => r.time !== null) as {
     satisfaction: string;
     time: number;
@@ -270,9 +267,10 @@ export function viz10(table: ResponseTable, lang: Language = "he"): BarDatum[] {
   const buckets: BarDatum[] = [];
   for (let i = 0; i < quartileCount; i++) {
     const slice = sorted.slice(i * size, (i + 1) * size);
-    // Always four bars: a quartile with no answers yet shows at 0%, unlabeled by range.
+    // Always four points: a group with no answers yet shows at 0%, labeled "—"
+    // (zero-width spaces keep the labels distinct, as the chart needs).
     if (slice.length === 0) {
-      buckets.push({ label: `${quartile} ${i + 1}`, value: 0 });
+      buckets.push({ label: "—" + "​".repeat(i), value: 0 });
       continue;
     }
     const negative = slice.filter((r) => NEGATIVE.includes(r.satisfaction)).length;
@@ -282,7 +280,7 @@ export function viz10(table: ResponseTable, lang: Language = "he"): BarDatum[] {
         ? `${Math.min(...times)} ${minutes}`
         : `${Math.min(...times)}-${Math.max(...times)} ${minutes}`;
     buckets.push({
-      label: `${quartile} ${i + 1} (${rangeLabel})`,
+      label: rangeLabel,
       value: Math.round((negative / slice.length) * 100),
     });
   }

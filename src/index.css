@@ -104,3 +104,17 @@ html[dir="rtl"] {
 .ranked-bar-value {
   animation: fade-in 0.35s ease-out both;
 }
+
+/* Line charts (LineChartCard): the chart reveals left to right once on mount. */
+@keyframes reveal-left-to-right {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+.line-reveal {
+  animation: reveal-left-to-right 1.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
