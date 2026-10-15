@@ -32,7 +32,7 @@ export function LineChartCard({
             tick={{ fill: "#1e3a8a", fontSize: 18, fontFamily: FONT }}
             axisLine={{ stroke: "#bfdbfe" }}
             tickLine={false}
-            padding={{ left: 24, right: 24 }}
+            padding={{ left: 64, right: 64 }}
           />
           <YAxis hide domain={[0, yMax]} />
           <Line
