@@ -153,16 +153,16 @@ empty key. Every viz's header bar also shows the respondent count
 | 8 | Q4 | median monthly cost (₪), big number |
 | 9 | Q4 | median commute time, big number |
 | 10 | Q4 | % dissatisfied per time quartile, **labeled with each quartile's actual time range** (e.g. "רבעון 1 (1-12 דקות)") |
-| 11 | Q4 | time-vs-cost scatter, 3-color by satisfaction (blue=very satisfied, red=very dissatisfied, purple=both middle levels); **excludes the single highest-time and single lowest-time response**; each point also shows a white transport-method icon, at 3x the original point/icon size |
+| 11 | Q4 | time-vs-cost scatter, one color per satisfaction level (blue / light blue / light red / red, very satisfied → not satisfied at all); **excludes only answers above 2000 ₪/month or 4 hours of commute**; each point also shows a white transport-method icon, at 3x the original point/icon size |
 | 12 | Q5 | 3 harshest "very dissatisfied" free-text experiences, black screen / big red text, ranked by a local severity score (answer length + a bonus per harsh word stem, Hebrew and English), with fallback to the next-worst level if fewer than 3 exist; trailing "." stripped from each quote; excludes answers that are *entirely* a stock "everything's fine" phrase (hardcoded denylist, not real sentiment analysis — see the visualizations addendum) |
 
 Two explicit assumptions made this session that were never fully
 confirmed — revisit if they turn out wrong:
 
-- Viz 10 excludes outliers **by time**, not by cost. The instructor's
-  phrasing ("should not include the highest and lowest number") didn't
-  specify which axis; time was chosen since it's the axis emphasized
-  in vizzes 8/9 too.
+- Resolved: the time-vs-cost scatter (viz 11) does **not** drop the
+  fastest/slowest answer — that rule was a misreading and was removed.
+  The instructor confirmed the only exclusions are answers above
+  2000 ₪/month or above 4 hours of commute.
 - Viz 9's quartiles split by **response count** (each bucket has
   roughly equal N), not by fixed time ranges. With few responses this
   can look uneven.

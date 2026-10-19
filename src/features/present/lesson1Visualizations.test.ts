@@ -121,45 +121,49 @@ describe("viz10 — % dissatisfied per time quartile", () => {
   });
 });
 
-describe("viz11 — scatter groups by satisfaction, excluding time outliers", () => {
-  it("excludes the single highest-time and single lowest-time response", () => {
+describe("viz11 — scatter groups by satisfaction", () => {
+  it("keeps the fastest and slowest commutes", () => {
     const rows = [
-      ["t", "מרוצה מאוד", "", "500", "5"], // lowest time -> excluded
-      ["t", "מרוצה מאוד", "", "600", "20"],
+      ["t", "מרוצה מאוד", "", "500", "5"],
       ["t", "מרוצה חלקית", "", "650", "30"],
-      ["t", "לא מרוצה כלל", "", "700", "40"],
-      ["t", "לא מרוצה כלל", "", "900", "99"], // highest time -> excluded
+      ["t", "לא מרוצה כלל", "", "900", "99"],
     ];
-    const groups = viz11(table(rows));
-    const allPoints = groups.flatMap((g) => g.points);
-    expect(allPoints).toHaveLength(3);
-    expect(allPoints.some((p) => p.x === 5)).toBe(false);
-    expect(allPoints.some((p) => p.x === 99)).toBe(false);
+    expect(viz11(table(rows)).flatMap((g) => g.points)).toHaveLength(3);
   });
 
   it("drops answers above 2000 ₪ a month or 4 hours of commute", () => {
     const rows = [
       ["t", "מרוצה מאוד", "", "100000", "30"], // cost too high -> dropped
       ["t", "מרוצה מאוד", "", "500", "300"], // over 4 hours -> dropped
-      ["t", "מרוצה מאוד", "", "2000", "10"], // exactly at the limits is kept (lowest time -> excluded by min/max)
-      ["t", "מרוצה חלקית", "", "600", "20"],
-      ["t", "לא מרוצה כלל", "", "700", "240"], // highest time -> excluded by min/max
+      ["t", "מרוצה מאוד", "", "2000", "10"], // exactly at the cost limit -> kept
+      ["t", "לא מרוצה כלל", "", "700", "240"], // exactly 4 hours -> kept
     ];
     const points = viz11(table(rows)).flatMap((g) => g.points);
-    expect(points.map((p) => [p.x, p.y])).toEqual([[20, 600]]);
+    expect(points.map((p) => [p.x, p.y]).sort((a, b) => a[0] - b[0])).toEqual([
+      [10, 2000],
+      [240, 700],
+    ]);
   });
 
-  it("buckets very-positive, mixed, and very-negative separately", () => {
+  it("keeps empty groups, for the legend", () => {
+    expect(viz11(table([["t", "מרוצה מאוד", "", "500", "20"]]))).toHaveLength(4);
+  });
+
+  it("gives each satisfaction level its own group and color, blue to red", () => {
     const rows = [
-      ["t", "מרוצה מאוד", "", "500", "20"],
-      ["t", "מרוצה חלקית", "", "600", "30"],
-      ["t", "לא מרוצה כלל", "", "700", "40"],
+      ["t", "Very satisfied", "", "500", "20"],
+      ["t", "Somewhat satisfied", "", "600", "30"],
+      ["t", "Not very satisfied", "", "650", "35"],
+      ["t", "Not satisfied at all", "", "700", "40"],
     ];
-    // Only 3 rows: min/max time excluded, leaving just the middle (mixed) point.
-    const groups = viz11(table(rows));
-    const allPoints = groups.flatMap((g) => g.points);
-    expect(allPoints).toEqual([{ x: 30, y: 600 }]);
-    expect(groups).toHaveLength(3); // empty groups stay, for the legend
+    const groups = viz11(table(rows), "en");
+    expect(groups.map((g) => [g.name, g.points.map((p) => p.x)])).toEqual([
+      ["Very satisfied", [20]],
+      ["Somewhat satisfied", [30]],
+      ["Not very satisfied", [35]],
+      ["Not satisfied at all", [40]],
+    ]);
+    expect(new Set(groups.map((g) => g.color)).size).toBe(4);
   });
 });
 

@@ -27,7 +27,6 @@ interface LessonText {
   notPleasedAtAll: string;
   veryPleased: string;
   notPleasedSomehow: string;
-  mixed: string;
   minutes: string;
   yesNo: [string, string];
   /** Q3/Q4/Q5 transport options, in Form order. */
@@ -42,7 +41,6 @@ const TEXT: Record<Language, LessonText> = {
     notPleasedAtAll: "לא מרוצים כלל",
     veryPleased: "מרוצים מאוד",
     notPleasedSomehow: "לא מרוצים ברמה כלשהי",
-    mixed: "מרוצה חלקית / לא כל כך מרוצה",
     minutes: "דקות",
     yesNo: ["כן", "לא"],
     transport: ["באוטובוס", "במכונית פרטית", "ברגל", "באופניים", "באופניים חשמליים/קורקינט חשמלי", "אחר"],
@@ -64,7 +62,6 @@ const TEXT: Record<Language, LessonText> = {
     notPleasedAtAll: "Not satisfied at all",
     veryPleased: "Very satisfied",
     notPleasedSomehow: "Not satisfied to some degree",
-    mixed: "Somewhat / not very satisfied",
     minutes: "min",
     yesNo: ["Yes", "No"],
     transport: ["By bus", "By private car", "On foot", "By bicycle", "By e-bike/e-scooter", "Other"],
@@ -96,7 +93,9 @@ function levels(lang: Language) {
 
 const BLUE = "#1d4ed8";
 const RED = "#dc2626";
-const PURPLE = "#7e22ce";
+// Slide 11's four satisfaction levels: blue (pleased) to red (displeased).
+const LIGHT_BLUE = "#60a5fa";
+const LIGHT_RED = "#f87171";
 
 function countBy(rows: string[][], col: number): Map<string, number> {
   const counts = new Map<string, number>();
@@ -288,21 +287,19 @@ export function viz10(table: ResponseTable, lang: Language = "he"): BarDatum[] {
 }
 
 /**
- * Viz 11 — scatter, time vs cost, colored by satisfaction (blue/purple/red), from Q4.
- * Excludes the single highest-time and single lowest-time response (outliers
- * on the time axis specifically, since time is the axis emphasized across
- * vizzes 9/10 too) — per instructor request, "should not include the highest
- * and lowest number." Before that, answers too big to be serious are
- * dropped: a monthly cost above MAX_MONTHLY_COST or a commute above
- * MAX_COMMUTE_MINUTES (instructor request — joke answers like 100,000 ₪
- * would otherwise squash every real point into a corner).
+ * Viz 11 — scatter, time vs cost, one color per satisfaction level
+ * (blue / light blue / light red / red), from Q4.
+ * Every answer is plotted except ones too big to be serious: a monthly cost
+ * above MAX_MONTHLY_COST or a commute above MAX_COMMUTE_MINUTES (instructor
+ * request — joke answers like 100,000 ₪ would otherwise squash every real
+ * point into a corner). Nothing else is excluded.
  */
 const MAX_MONTHLY_COST = 2000;
 const MAX_COMMUTE_MINUTES = 4 * 60;
 
 export function viz11(table: ResponseTable, lang: Language = "he"): ScatterGroup[] {
   const l = levels(lang);
-  const allRows = costTimeRows(table).filter(
+  const rows = costTimeRows(table).filter(
     (r) => r.time !== null && r.cost !== null && r.cost <= MAX_MONTHLY_COST && r.time <= MAX_COMMUTE_MINUTES
   ) as {
     satisfaction: string;
@@ -311,27 +308,20 @@ export function viz11(table: ResponseTable, lang: Language = "he"): ScatterGroup
     cost: number;
   }[];
 
-  const times = allRows.map((r) => r.time);
-  const minTime = Math.min(...times);
-  const maxTime = Math.max(...times);
-  const rows =
-    allRows.length > 2 ? allRows.filter((r) => r.time !== minTime && r.time !== maxTime) : allRows;
-
-  const groups: Record<"pleased" | "mixed" | "unpleased", ScatterGroup> = {
-    pleased: { name: l.veryPositive, color: BLUE, points: [] },
-    mixed: { name: TEXT[lang].mixed, color: PURPLE, points: [] },
-    unpleased: { name: l.veryNegative, color: RED, points: [] },
-  };
+  const groups: ScatterGroup[] = [
+    { name: l.veryPositive, color: BLUE, points: [] },
+    { name: l.somewhatPositive, color: LIGHT_BLUE, points: [] },
+    { name: l.somewhatNegative, color: LIGHT_RED, points: [] },
+    { name: l.veryNegative, color: RED, points: [] },
+  ];
 
   for (const row of rows) {
-    const point = { x: row.time, y: row.cost, method: row.method || undefined };
-    if (row.satisfaction === l.veryPositive) groups.pleased.points.push(point);
-    else if (row.satisfaction === l.veryNegative) groups.unpleased.points.push(point);
-    else groups.mixed.points.push(point);
+    const group = groups.find((g) => g.name === row.satisfaction);
+    group?.points.push({ x: row.time, y: row.cost, method: row.method || undefined });
   }
 
-  // All three groups, even empty ones, so the legend always shows every satisfaction level.
-  return [groups.pleased, groups.mixed, groups.unpleased];
+  // All four groups, even empty ones, so the legend always shows every satisfaction level.
+  return groups;
 }
 
 /** Strips one trailing "." (only) — keeps "?"/"!" as-is, just tidies a plain full stop for display. */
