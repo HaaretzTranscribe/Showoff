@@ -365,28 +365,52 @@ const INTENSITY_STEMS = [
   "סיוט", "זוועה", "זוועתי", "נורא", "איום", "גיהנום", "גהנום", "עצבים", "עצבני", "תסכול",
   "מתסכל", "צפיפות", "צפוף", "דחוס", "מחנק", "חנוק", "מסוכן", "מפחיד", "פחד", "בכי", "בוכה",
   "נתקע", "תקוע", "איחור", "מאחר", "שעתיים", "חום", "מזיע", "ריח", "השפלה", "מושפל", "גרוע",
-  "בלתי נסבל", "מתיש", "מותש", "לחץ",
+  "בלתי נסבל", "מתיש", "מותש", "לחץ", "פקק", "חניה", "חנייה", "מעצבן", "ארוך", "ארוכה", "משעמם",
+  "לא אמין", "מבוזבז", "בזבוז", "מבאס", "גרוע",
   // English
   "nightmare", "horrible", "horrific", "terrible", "awful", "hell", "unbearable", "furious",
   "angry", "frustrat", "crowded", "packed", "suffocat", "dangerous", "scary", "scared", "afraid",
   "cry", "crying", "stuck", "late", "hours", "sweat", "smell", "humiliat", "worst", "exhaust",
-  "stress",
+  "stress", "suck", "annoy", "drain", "traffic", "parking", "long", "boring", "inefficient",
+  "waste", "unreliable", "hate", "miserable", "tiring", "tired",
 ];
 const INTENSITY_BONUS = 40;
 
-/** Higher = harsher: longer, more detailed answers plus a bonus per harsh word stem. */
+/** Words that mark an answer as not really a complaint ("…but I enjoy it"). */
+const POSITIVE_STEMS = [
+  "נוח", "כיף", "אוהב", "אוהבת", "נהנה", "נהנית", "טוב", "מושלם", "שקט",
+  "enjoy", "like", "love", "convenient", "fun", "easy", "chill", "nice", "pleasant", "great", "perfect",
+];
+const POSITIVE_PENALTY = 70;
+
+/** Extra weight for the lowest satisfaction level — a bonus, not absolute priority. */
+const VERY_NEGATIVE_BONUS = 30;
+
+/**
+ * Higher = harsher: longer, more detailed answers, plus a bonus per harsh
+ * word stem, minus a penalty per positive word.
+ */
 function severity(text: string): number {
-  const lower = text.toLowerCase();
-  const hits = INTENSITY_STEMS.filter((stem) => lower.includes(stem)).length;
-  return text.length + hits * INTENSITY_BONUS;
+  // Drop negated words first: "לא נורא" / "not bad" isn't harsh, and
+  // "לא נוח" / "not convenient" isn't praise.
+  const unnegated = text
+    .toLowerCase()
+    .replace(/(?:^|\s)(?:לא|not|no|isn't|wasn't|don't|doesn't)\s+\S+/g, " ");
+  const harsh = INTENSITY_STEMS.filter((stem) => unnegated.includes(stem)).length;
+  // The tone sits after the last "but": "…but I enjoy it" is praise,
+  // "the train is convenient, but…" is a complaint.
+  const lastClause = unnegated.split(/\b(?:but|however)\b|אבל|אך|למרות/).pop() ?? unnegated;
+  const positive = POSITIVE_STEMS.filter((stem) => lastClause.includes(stem)).length;
+  return text.length + harsh * INTENSITY_BONUS - positive * POSITIVE_PENALTY;
 }
 
 /**
- * Viz 12 — the 3 harshest free-text experiences from Q5. "Not satisfied
- * at all" answers always come first, falling back to "not very
- * satisfied" if fewer than 3 exist; within each level, answers are ranked
- * by severity() (most recent first on a tie). Computed locally from the
- * table, so it's instant and stable across refreshes.
+ * Viz 12 — the 3 harshest free-text experiences from Q5, among everyone who
+ * answered "not satisfied at all" or "not very satisfied". Both levels are
+ * ranked together by severity(), with a bonus for "not satisfied at all"
+ * — not strict priority, since a vivid "not very satisfied" complaint
+ * should beat a mild "not at all" one. Most recent first on a tie.
+ * Computed locally from the table, so it's instant and stable across refreshes.
  */
 export function viz12(table: ResponseTable, lang: Language = "he"): string[] {
   const { veryNegative, somewhatNegative } = levels(lang);
@@ -394,13 +418,22 @@ export function viz12(table: ResponseTable, lang: Language = "he"): string[] {
   // tie-break favor the most recent answer.
   const reversed = [...table.rows].reverse();
 
-  function harshestWith(satisfactionValue: string): string[] {
-    return reversed
-      .filter((row) => (row[COL.q5.satisfaction] ?? "").trim() === satisfactionValue)
-      .map((row) => stripTrailingPeriod((row[COL.q5.experience] ?? "").trim()))
-      .filter((text) => text && !isNoComplaintPhrase(text, lang))
-      .sort((a, b) => severity(b) - severity(a));
-  }
-
-  return [...harshestWith(veryNegative), ...harshestWith(somewhatNegative)].slice(0, 3);
+  return reversed
+    .map((row) => ({
+      satisfaction: (row[COL.q5.satisfaction] ?? "").trim(),
+      text: stripTrailingPeriod((row[COL.q5.experience] ?? "").trim()),
+    }))
+    .filter(
+      ({ satisfaction, text }) =>
+        (satisfaction === veryNegative || satisfaction === somewhatNegative) &&
+        text &&
+        !isNoComplaintPhrase(text, lang)
+    )
+    .map(({ satisfaction, text }) => ({
+      text,
+      score: severity(text) + (satisfaction === veryNegative ? VERY_NEGATIVE_BONUS : 0),
+    }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3)
+    .map((a) => a.text);
 }

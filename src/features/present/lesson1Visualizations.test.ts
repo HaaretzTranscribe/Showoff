@@ -164,7 +164,7 @@ describe("viz11 — scatter groups by satisfaction, excluding time outliers", ()
 });
 
 describe("viz12 — three worst experiences", () => {
-  it("ranks very-negative responses by severity, not by recency", () => {
+  it("ranks dissatisfied answers by severity, not by recency", () => {
     const rows = [
       ["t", "לא מרוצה כלל", "שעה ורבע של צפיפות וחום בכל בוקר, ואם האוטובוס מאחר אני מגיע בעצבים"],
       ["t", "מרוצה מאוד", "irrelevant"],
@@ -172,30 +172,42 @@ describe("viz12 — three worst experiences", () => {
       ["t", "לא מרוצה כלל", "סיוט"],
       ["t", "לא מרוצה כלל", "יש פקקים לפעמים"],
     ];
-    const result = viz12(table(rows));
-    expect(result).toEqual([
+    expect(viz12(table(rows))).toEqual([
       "שעה ורבע של צפיפות וחום בכל בוקר, ואם האוטובוס מאחר אני מגיע בעצבים",
-      "סיוט",
       "יש פקקים לפעמים",
+      "סיוט",
     ]);
   });
 
-  it("never lets a less-dissatisfied answer outrank a very-negative one", () => {
+  it("lets a vivid 'not very satisfied' complaint beat a mild 'not satisfied at all' one", () => {
     const rows = [
       ["t", "לא כל כך מרוצה", "ארוך מאוד ומפורט מאוד עם סיוט וזוועה וצפיפות ועצבים ואיחורים כל יום"],
       ["t", "לא מרוצה כלל", "רע"],
     ];
-    const result = viz12(table(rows));
-    expect(result[0]).toBe("רע");
+    expect(viz12(table(rows))).toEqual([
+      "ארוך מאוד ומפורט מאוד עם סיוט וזוועה וצפיפות ועצבים ואיחורים כל יום",
+      "רע",
+    ]);
   });
 
-  it("falls back to the next-worst level when fewer than 3 very-negative exist", () => {
+  it("pushes down answers that are really positive", () => {
     const rows = [
-      ["t", "לא מרוצה כלל", "the one bad one"],
-      ["t", "לא כל כך מרוצה", "somewhat bad"],
+      ["t", "Not satisfied at all", "I'm stuck in traffic forever but I enjoy it"],
+      ["t", "Not very satisfied", "Annoying and inefficient"],
     ];
-    const result = viz12(table(rows));
-    expect(result).toEqual(["the one bad one", "somewhat bad"]);
+    expect(viz12(table(rows), "en")[0]).toBe("Annoying and inefficient");
+  });
+
+  it("doesn't treat a negated positive word as praise", () => {
+    const rows = [
+      ["t", "Not very satisfied", "ok"],
+      ["t", "Not very satisfied", "Not convenient"],
+    ];
+    expect(viz12(table(rows), "en")[0]).toBe("Not convenient");
+  });
+
+  it("ignores answers from satisfied respondents", () => {
+    expect(viz12(table([["t", "מרוצה חלקית", "סיוט מוחלט כל יום"]]))).toEqual([]);
   });
 
   it("strips a trailing period but leaves other punctuation alone", () => {
