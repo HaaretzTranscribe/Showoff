@@ -292,12 +292,19 @@ export function viz10(table: ResponseTable, lang: Language = "he"): BarDatum[] {
  * Excludes the single highest-time and single lowest-time response (outliers
  * on the time axis specifically, since time is the axis emphasized across
  * vizzes 9/10 too) — per instructor request, "should not include the highest
- * and lowest number." If cost outliers should be excluded too/instead,
- * that needs a follow-up spec.
+ * and lowest number." Before that, answers too big to be serious are
+ * dropped: a monthly cost above MAX_MONTHLY_COST or a commute above
+ * MAX_COMMUTE_MINUTES (instructor request — joke answers like 100,000 ₪
+ * would otherwise squash every real point into a corner).
  */
+const MAX_MONTHLY_COST = 2000;
+const MAX_COMMUTE_MINUTES = 4 * 60;
+
 export function viz11(table: ResponseTable, lang: Language = "he"): ScatterGroup[] {
   const l = levels(lang);
-  const allRows = costTimeRows(table).filter((r) => r.time !== null && r.cost !== null) as {
+  const allRows = costTimeRows(table).filter(
+    (r) => r.time !== null && r.cost !== null && r.cost <= MAX_MONTHLY_COST && r.time <= MAX_COMMUTE_MINUTES
+  ) as {
     satisfaction: string;
     method: string;
     time: number;

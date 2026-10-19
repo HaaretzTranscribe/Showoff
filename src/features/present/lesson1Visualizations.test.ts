@@ -137,6 +137,18 @@ describe("viz11 — scatter groups by satisfaction, excluding time outliers", ()
     expect(allPoints.some((p) => p.x === 99)).toBe(false);
   });
 
+  it("drops answers above 2000 ₪ a month or 4 hours of commute", () => {
+    const rows = [
+      ["t", "מרוצה מאוד", "", "100000", "30"], // cost too high -> dropped
+      ["t", "מרוצה מאוד", "", "500", "300"], // over 4 hours -> dropped
+      ["t", "מרוצה מאוד", "", "2000", "10"], // exactly at the limits is kept (lowest time -> excluded by min/max)
+      ["t", "מרוצה חלקית", "", "600", "20"],
+      ["t", "לא מרוצה כלל", "", "700", "240"], // highest time -> excluded by min/max
+    ];
+    const points = viz11(table(rows)).flatMap((g) => g.points);
+    expect(points.map((p) => [p.x, p.y])).toEqual([[20, 600]]);
+  });
+
   it("buckets very-positive, mixed, and very-negative separately", () => {
     const rows = [
       ["t", "מרוצה מאוד", "", "500", "20"],
